@@ -23,7 +23,13 @@ jobs:
           node-version: '20'
 
       - name: Install Supabase CLI
-        run: npm install -g supabase
+        run: |
+          # Em vez de npm install -g, usamos este comando oficial de instalação:
+          curl -sSL https://github.com/supabase/cli/releases/latest/download/supabase_linux_amd64.tar.gz | tar -xzp
+          sudo mv supabase /usr/local/bin/
+          
+      - name: Verify Supabase Installation
+        run: supabase --version
 
       - name: Run Audit Script
         env:
