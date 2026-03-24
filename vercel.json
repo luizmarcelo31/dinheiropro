@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "buildCommand": "echo 'Static build'",
+  "outputDirectory": "DinheiroPro-main",
+  "public": true,
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "DinheiroPro-main/$1"
+    }
+  ]
+}
