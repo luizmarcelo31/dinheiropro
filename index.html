@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>AXON - Galaxy Edition | Login</title>
+    <title>DinheiroPro Login</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -18,10 +18,10 @@
     <div class="nebulosa n2"></div>
 
     <!-- TELA DE LOGIN -->
-    <div id="tela-login" style="display: flex; position: absolute; justify-content: center; align-items: center; width: 100%; min-height: 100vh;">
+    <div id="tela-login">
         <div class="login-box">
-            <div class="logo-axon">AXON</div>
-            <div class="subtitle">Galaxy Edition</div>
+            <div class="logo-axon">Dinheiro</div>
+            <div class="subtitle">PRO</div>
 
             <input id="email" class="axon-input" placeholder="Seu Email de Acesso" type="email">
             <input id="senha" class="axon-input" type="password" placeholder="Sua Senha">
@@ -45,11 +45,12 @@
                 </div>
             </div>
         </div>
+    </div>
 
-        <div class="tutorial-container">
+    <div class="tutorial-container">
             <div class="tut-header">
                 <h2>O Sistema ERP Definitivo</h2>
-                <p>O <strong>AXON Galaxy Edition</strong> não é apenas um aplicativo de finanças; é um Centro de Comando de Negócios e Vida Pessoal. Ele foi desenhado para te dar o controle absoluto sobre o seu dinheiro, clientes e construção de patrimônio. Sem complicação, direto no seu bolso.</p>
+                <p>O <strong>DINHEIRO PRO Edition</strong> não é apenas um aplicativo de finanças; é um Centro de Comando de Negócios e Vida Pessoal. Ele foi desenhado para te dar o controle absoluto sobre o seu dinheiro, clientes e construção de patrimônio. Sem complicação, direto no seu bolso.</p>
                 <p style="margin-top: 10px; color: var(--axon-blue); font-weight: bold;">Descubra como o motor do AXON funciona:</p>
             </div>
 
@@ -73,7 +74,7 @@
             </div>
 
             <div style="text-align: center; margin-top: 40px;">
-                <p style="color: var(--axon-aurora); font-weight: 900; font-size: 1.2rem; text-transform: uppercase; letter-spacing: 2px;">O AXON é a sua mente organizada em código</p>
+                <p style="color: var(--axon-aurora); font-weight: 900; font-size: 1.2rem; text-transform: uppercase; letter-spacing: 2px;">O DINHEIRO PRO é a sua mente organizada em código.</p>
             </div>
         </div>
     </div>
@@ -83,7 +84,8 @@
         <!-- HEADER -->
         <div class="painel-header" style="background: rgba(15, 23, 42, 0.7); padding: 20px; border-radius: 12px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
             <div>
-                <h1 style="margin: 0; color: var(--axon-blue); font-size: 2rem;">AXON - Centro de Comando</h1>
+                <h1 style="margin: 0; color: var(--axon-blue); font-size: 2rem;">DINHEIRO PRO</h1> 
+                <h2 style="margin: 0; color: var(--axon-blue); font-size: 1.5rem;">Centro de Comando</h2>
                 <p style="margin: 5px 0 0 0; color: var(--axon-aurora);">Bem-vindo, <span id="email-user">usuário</span></p>
             </div>
             <button class="btn-header" onclick="logout()">SAIR</button>

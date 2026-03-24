@@ -440,7 +440,7 @@
                 let html = `
                     <div style="font-family: Arial, sans-serif; max-width: 100%; margin: 0; padding: 0;">
                         <div style="text-align: center; margin-bottom: 30px; border-bottom: 3px solid #06b6d4; padding-bottom: 20px;">
-                            <h1 style="margin: 0; color: #000; font-size: 28px; letter-spacing: 2px;">AXON - CENTRO DE COMANDO</h1>
+                            <h1 style="margin: 0; color: #000; font-size: 28px; letter-spacing: 2px;">DINHEIRO PRO - CENTRO DE COMANDO</h1>
                             <p style="margin: 5px 0 0 0; color: #666; font-size: 12px;">Gerador de Relatórios Financeiros</p>
                             <p style="margin: 8px 0 0 0; color: #999; font-size: 11px;">Relatório gerado em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}</p>
                         </div>
