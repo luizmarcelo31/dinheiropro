@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "buildCommand": "echo 'Static build'",
+  "outputDirectory": ".",
+  "public": true,
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/$1"
+    }
+  ]
+}
