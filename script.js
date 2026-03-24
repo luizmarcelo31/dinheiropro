@@ -413,6 +413,7 @@
         }
 
         async function gerarRelatorioPDF(tipo) {
+HEAD
     try {
         const previewDiv = document.getElementById('preview-relatorio');
         const conteudoDiv = document.getElementById('conteudo-relatorio');
@@ -499,6 +500,71 @@
         alert("Erro ao gerar relatório: " + error.message);
     }
 }
+
+            try {
+                const previewDiv = document.getElementById('preview-relatorio');
+                const conteudoDiv = document.getElementById('conteudo-relatorio');
+
+                if (!usuarioId) {
+                    alert("Erro: Usuário não identificado");
+                    return;
+                }
+
+                // Buscar dados em paralelo
+                const [devedoresResult, vendasResult, gastosResult] = await Promise.all([
+                    supabaseClient.from('devedores').select('id, nome, valor, data_vencimento, status').eq('usuario_id', usuarioId),
+                    supabaseClient.from('vendas').select('id, descricao, valor, data').eq('usuario_id', usuarioId),
+                    supabaseClient.from('gastos').select('id, descricao, valor, data').eq('usuario_id', usuarioId)
+                ]);
+
+                const devedores = devedoresResult.data;
+                const vendas = vendasResult.data;
+                const gastos = gastosResult.data;
+
+                const totalVendas = vendas?.reduce((sum, v) => sum + v.valor, 0) || 0;
+                const totalGastos = gastos?.reduce((sum, g) => sum + g.valor, 0) || 0;
+                const totalReceber = devedores?.reduce((sum, d) => sum + d.valor, 0) || 0;
+
+                let html = `
+                    <div style="font-family: Arial, sans-serif; max-width: 100%; margin: 0; padding: 0;">
+                        <div style="text-align: center; margin-bottom: 30px; border-bottom: 3px solid #06b6d4; padding-bottom: 20px;">
+                            <h1 style="margin: 0; color: #000; font-size: 28px; letter-spacing: 2px;">DINHEIRO PRO - CENTRO DE COMANDO</h1>
+                            <p style="margin: 5px 0 0 0; color: #666; font-size: 12px;">Gerador de Relatórios Financeiros</p>
+                            <p style="margin: 8px 0 0 0; color: #999; font-size: 11px;">Relatório gerado em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}</p>
+                        </div>
+                `;
+
+                if (tipo === 'completo' || tipo === 'devedores') {
+                    html += gerarSecaoDevedores(devedores, totalReceber);
+                }
+                if (tipo === 'completo' || tipo === 'vendas') {
+                    html += gerarSecaoVendas(vendas, totalVendas);
+                }
+                if (tipo === 'completo' || tipo === 'gastos') {
+                    html += gerarSecaoGastos(gastos, totalGastos);
+                }
+
+                if (tipo === 'completo') {
+                    html += gerarSecaoResumo(totalVendas, totalGastos, totalReceber);
+                }
+
+                html += `
+                    </div>
+                    <div style="margin-top: 40px; text-align: center; color: #999; font-size: 10px; border-top: 1px solid #ddd; padding-top: 15px;">
+                        <p>Este relatório é confidencial e destina-se exclusivamente ao usuário autorizado.</p>
+                    </div>
+                `;
+
+                conteudoDiv.innerHTML = html;
+                previewDiv.style.display = 'block';
+
+                previewDiv.scrollIntoView({ behavior: 'smooth' });
+            } catch (error) {
+                alert("Erro ao gerar relatório: " + error.message);
+            }
+        
+
+ cf07f1143f06c35341c2b1a1d05e7cee93743e7b
         function gerarSecaoDevedores(devedores, total) {
             if (!devedores || devedores.length === 0) {
                 return `
@@ -616,6 +682,7 @@
             return html;
         }
 
+HEAD
        
         
             function cardResumo(titulo, valor, cor) {
@@ -656,6 +723,7 @@ function formatarData(data) {
     if (!data) return "-";
     return new Date(data).toLocaleDateString('pt-BR');}
 
+ cf07f1143f06c35341c2b1a1d05e7cee93743e7b
         function gerarSecaoResumo(totalVendas, totalGastos, totalReceber) {
             const lucro = totalVendas - totalGastos;
             const lucroColor = lucro >= 0 ? '#10b981' : '#ef4444';
@@ -687,6 +755,7 @@ function formatarData(data) {
         }
 
         async function downloadRelatorioPDF() {
+HEAD
     const element = document.getElementById('conteudo-relatorio');
 
     const canvas = await html2canvas(element, {
@@ -719,6 +788,46 @@ function formatarData(data) {
 
     pdf.save('relatorio.pdf');
 }
+
+            if (!document.getElementById('conteudo-relatorio')) {
+                alert("Erro: Nenhum relatório foi gerado");
+                return;
+            }
+
+            try {
+                const element = document.getElementById('conteudo-relatorio');
+                const canvas = await html2canvas(element, {
+                    scale: 2,
+                    useCORS: true,
+                    allowTaint: true,
+                    backgroundColor: '#ffffff'
+                });
+
+                const imgData = canvas.toDataURL('image/png');
+                const pdf = new jspdf.jsPDF('p', 'mm', 'a4');
+                const imgWidth = 190;
+                const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                const pageHeight = 277;
+
+                pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
+
+                let position = imgHeight + 10;
+                while (position > pageHeight) {
+                    pdf.addPage();
+                    position -= pageHeight;
+                    pdf.addImage(imgData, 'PNG', 10, 10 - position, imgWidth, imgHeight);
+                }
+
+                const tipo = document.querySelector('.aba-content[style*="display: block"] #preview-relatorio') ? 'completo' : 'customizado';
+                const nomeArquivo = `Relatorio_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.pdf`;
+                pdf.save(nomeArquivo);
+
+                alert("PDF baixado com sucesso!");
+            } catch (error) {
+                alert("Erro ao gerar PDF: " + error.message);
+            }
+        
+ cf07f1143f06c35341c2b1a1d05e7cee93743e7b
 
         window.addEventListener('load', gerenciarTelas);
         
