@@ -1,0 +1,126 @@
+
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Document</title>
+    </head>
+    <body>
+        <div id="painel-interno" style="display: none;">
+        <div class="painel-header">
+            <h1>PAINEL AXON</h1>
+            <button class="btn-login" onclick="logout()" style="width: auto; padding: 10px 20px; font-size: 0.9rem;">SAIR</button>
+        </div>
+
+        <!-- NAVEGAÇÃO DE ABAS -->
+        <div class="tabs-nav">
+            <button onclick="abrirAba('dashboard')" class="tab-btn active"> Dashboard</button>
+            <button onclick="abrirAba('devedores')" class="tab-btn"> Devedores</button>
+            <button onclick="abrirAba('vendas')" class="tab-btn"> Vendas</button>
+            <button onclick="abrirAba('gastos')" class="tab-btn"> Gastos</button>
+        </div>
+
+        <!-- ABA DASHBOARD -->
+        <div id="aba-dashboard" class="aba-content active">
+            <h2 style="color: var(--axon-blue); margin-top: 0;"> Dashboard de Resumo</h2>
+            <div class="dashboard-grid">
+                <div class="dashboard-card" style="background: rgba(59, 130, 246, 0.1); border-color: var(--axon-blue);">
+                    <p>Total em Vendas</p>
+                    <h3 style="color: var(--axon-blue);" id="total-vendas">R$ 0,00</h3>
+                </div>
+                <div class="dashboard-card" style="background: rgba(45, 212, 191, 0.1); border-color: var(--axon-aurora);">
+                    <p>A Receber</p>
+                    <h3 style="color: var(--axon-aurora);" id="total-receber">R$ 0,00</h3>
+                </div>
+                <div class="dashboard-card" style="background: rgba(168, 85, 247, 0.1); border-color: #a855f7;">
+                    <p>Total em Gastos</p>
+                    <h3 style="color: #a855f7;" id="total-gastos">R$ 0,00</h3>
+                </div>
+            </div>
+        </div>
+
+        <!-- ABA DEVEDORES -->
+        <div id="aba-devedores" class="aba-content">
+            <h2 style="color: var(--axon-aurora); margin-top: 0;"> Devedores</h2>
+            
+            <div style="background: rgba(45, 212, 191, 0.1); padding: 20px; border-radius: 12px; margin-bottom: 30px;">
+                <h3 style="color: var(--axon-aurora); margin-top: 0;">Adicionar Devedor</h3>
+                <div class="form-grupo full">
+                    <input id="dev-nome" class="axon-input" placeholder="Nome do devedor" style="margin-bottom: 10px;">
+                    <input id="dev-valor" class="axon-input" placeholder="Valor devido (R$)" type="number" step="0.01" style="margin-bottom: 10px;">
+                    <input id="dev-data" class="axon-input" type="date" style="margin-bottom: 10px;">
+                    <button class="btn-login" onclick="adicionarDevedor()">ADICIONAR</button>
+                </div>
+            </div>
+
+            <div class="sniper-container">
+                <div class="sniper-header">
+                    <span class="cyan-dot"></span>
+                    <h3 style="color: var(--axon-aurora); margin-top: 0;">BUSCA SNIPER</h3>
+                </div>
+            </div>
+
+            <div class="search-box" style="background: rgba(45, 212, 191, 0.1); padding: 20px; border-radius: 12px; margin-bottom: 30px;">
+                <i class="fa-solid fa-magnifying-glass" style="color: var(--axon-aurora); margin-top: 0;"></i>
+                     <input type="text" id="searchInput" placeholder="FILTRAR NOME...">
+            </div>
+
+            <div class="filter-chips">
+                <button class="chip active">TODOS</button>
+                <button class="chip">PENDENTES</button>
+                <button class="chip">PAGOS</button>
+                <button class="chip">NEGOCIANDO</button>
+                <button class="chip">ATRASADOS</button>
+            </div>
+
+            <div class="results-list" id="resultsList">
+            </div>
+
+            <h3 style="color: var(--axon-aurora);">Lista de Devedores</h3>
+                <div id="lista-devedores" style="color: #cbd5e1;">Carregando...</div>
+            </div>
+
+        <!-- ABA VENDAS -->
+        <div id="aba-vendas" class="aba-content">
+            <h2 style="color: var(--axon-gold); margin-top: 0;">🛒 Vendas</h2>
+            
+            <div style="background: rgba(245, 158, 11, 0.1); padding: 20px; border-radius: 12px; margin-bottom: 30px;">
+                <h3 style="color: var(--axon-gold); margin-top: 0;">Registrar Venda</h3>
+                <div class="form-grupo full">
+                    <input id="vend-descricao" class="axon-input" placeholder="Descrição do produto" style="margin-bottom: 10px;">
+                    <input id="vend-valor" class="axon-input" placeholder="Valor (R$)" type="number" step="0.01" style="margin-bottom: 10px;">
+                    <input id="vend-data" class="axon-input" type="date" style="margin-bottom: 10px;">
+                    <button class="btn-login" onclick="adicionarVenda()">REGISTRAR VENDA</button>
+                </div>
+            </div>
+
+            <h3 style="color: var(--axon-gold);">Total Vendido Hoje: <span id="total-vend-hoje" style="color: var(--axon-gold);">R$ 0,00</span></h3>
+            <div id="lista-vendas" style="color: #cbd5e1;">Carregando...</div>
+        </div>
+
+        <!-- ABA GASTOS -->
+        <div id="aba-gastos" class="aba-content">
+            <h2 style="color: #a855f7; margin-top: 0;"> Gastos Diários</h2>
+            
+            <div style="background: rgba(168, 85, 247, 0.1); padding: 20px; border-radius: 12px; margin-bottom: 30px;">
+                <h3 style="color: #a855f7; margin-top: 0;">Registrar Gasto</h3>
+                <div class="form-grupo full">
+                    <input id="gast-descricao" class="axon-input" placeholder="Descrição do gasto" style="margin-bottom: 10px;">
+                    <input id="gast-valor" class="axon-input" placeholder="Valor (R$)" type="number" step="0.01" style="margin-bottom: 10px;">
+                    <input id="gast-data" class="axon-input" type="date" style="margin-bottom: 10px;">
+                    <button class="btn-login" onclick="adicionarGasto()">REGISTRAR GASTO</button>
+                </div>
+            </div>
+
+            <h3 style="color: #a855f7;">Total Gasto Hoje: <span id="total-gast-hoje" style="color: #a855f7;">R$ 0,00</span></h3>
+            <div id="lista-gastos" style="color: #cbd5e1;">Carregando...</div>
+        </div>
+
+        <div style="margin-top: 60px; text-align: center;">
+            <p style="color: #64748b; font-size: 0.9rem;">Você está logado como: <span id="email-user" style="color: var(--axon-aurora); font-weight: bold;">usuário</span></p>
+        </div>
+    </div>
+    </body>
+    </html>
+    

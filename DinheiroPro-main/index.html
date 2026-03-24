@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>AXON - Galaxy Edition | Login</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <script src="script.js" defer></script>
+    
+</head>
+<body>
+    <div class="nebulosa n1"></div>
+    <div class="nebulosa n2"></div>
+
+    <!-- TELA DE LOGIN -->
+    <div id="tela-login" style="display: flex; position: absolute; justify-content: center; align-items: center; width: 100%; min-height: 100vh;">
+        <div class="login-box">
+            <div class="logo-axon">AXON</div>
+            <div class="subtitle">Galaxy Edition</div>
+
+            <input id="email" class="axon-input" placeholder="Seu Email de Acesso" type="email">
+            <input id="senha" class="axon-input" type="password" placeholder="Sua Senha">
+
+            <button class="btn-login" onclick="login()">ENTRAR</button>
+            
+            <p><a class="link-registro" onclick="abrirModalRegistro()">Não tem conta? Criar conta agora</a></p>
+        </div>
+
+        <div id="modal-registro" style="display: none;">
+            <div class="modal-card">
+                <div class="logo-axon" style="font-size: 2rem;">NOVA CONTA</div>
+                <p class="text-gray-400 text-sm mb-6 uppercase tracking-widest">Crie seu acesso ao AXON</p>
+                
+                <input id="reg-email" class="axon-input" placeholder="Digite seu Email" type="email">
+                <input id="reg-senha" class="axon-input" type="password" placeholder="Crie uma Senha">
+                
+                <div class="flex mt-2">
+                    <button class="axon-input bg-gray-900 border-none w-1/3 cursor-pointer" style="margin-bottom: 0;" onclick="fecharModalRegistro()">VOLTAR</button>
+                    <button class="btn-login flex-grow" style="margin-top: 0;" onclick="executarRegistro()">CRIAR CONTA</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="tutorial-container">
+            <div class="tut-header">
+                <h2>O Sistema ERP Definitivo</h2>
+                <p>O <strong>AXON Galaxy Edition</strong> não é apenas um aplicativo de finanças; é um Centro de Comando de Negócios e Vida Pessoal. Ele foi desenhado para te dar o controle absoluto sobre o seu dinheiro, clientes e construção de patrimônio. Sem complicação, direto no seu bolso.</p>
+                <p style="margin-top: 10px; color: var(--axon-blue); font-weight: bold;">Descubra como o motor do AXON funciona:</p>
+            </div>
+
+            <div class="tut-secao" style="border-color: var(--axon-blue);">
+                <h3> 1. Aba DEVEDORES (A Arte da Cobrança)</h3>
+                <p><span class="destaque">Para que serve:</span> Controlar quem te deve dinheiro, fiados ou serviços prestados a prazo.</p>
+                <p><span class="destaque">Como funciona:</span> Você registra o nome do devedor, o valor e a data. O AXON controla tudo automaticamente.</p>
+            </div>
+            
+
+            <div class="tut-secao" style="border-color: var(--axon-aurora);">
+                <h3> 2. Aba VENDAS (Fluxo de Caixa Rápido)</h3>
+                <p><span class="destaque">Para que serve:</span> Registrar o dinheiro limpo que entra na hora. Fez um serviço? Vendeu um produto? É aqui que você anota.</p>
+                <p><span class="destaque">Inteligência:</span> O AXON soma automaticamente o total de vendas do dia.</p>
+            </div>
+
+            <div class="tut-secao" style="border-color: #a855f7;">
+                <h3> 3. Aba GASTOS DIÁRIOS (O Ralo do Dinheiro)</h3>
+                <p><span class="destaque">Para que serve:</span> Mapear os pequenos gastos do dia a dia (café, Uber, almoço, fornecedor rápido).</p>
+                <p><span class="destaque">Flexível:</span> Registre todos os seus gastos e o AXON faz o controle automático.</p>
+            </div>
+
+            <div style="text-align: center; margin-top: 40px;">
+                <p style="color: var(--axon-aurora); font-weight: 900; font-size: 1.2rem; text-transform: uppercase; letter-spacing: 2px;">O AXON é a sua mente organizada em código</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- PAINEL INTERNO (APÓS LOGIN) -->
+    <div id="painel-interno" style="display: none; width: 100%; margin: 0 auto;">
+        <!-- HEADER -->
+        <div class="painel-header" style="background: rgba(15, 23, 42, 0.7); padding: 20px; border-radius: 12px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <h1 style="margin: 0; color: var(--axon-blue); font-size: 2rem;">AXON - Centro de Comando</h1>
+                <p style="margin: 5px 0 0 0; color: var(--axon-aurora);">Bem-vindo, <span id="email-user">usuário</span></p>
+            </div>
+            <button class="btn-header" onclick="logout()">SAIR</button>
+        </div>
+
+        <!-- ABAS -->
+        <div class="abas-nav" style="display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid rgba(59, 130, 246, 0.2); flex-wrap: wrap;">
+            <button class="tab-btn active" onclick="abrirAba('dashboard')"> DASHBOARD</button>
+            <button class="tab-btn" onclick="abrirAba('devedores')"> DEVEDORES</button>
+            <button class="tab-btn" onclick="abrirAba('vendas')"> VENDAS</button>
+            <button class="tab-btn" onclick="abrirAba('gastos')"> GASTOS</button>
+            <button class="tab-btn" onclick="abrirAba('relatorios')"> RELATÓRIOS</button>
+        </div>
+
+        <!-- CONTEÚDO DAS ABAS -->
+        
+        <!-- ABA DASHBOARD -->
+        <div id="aba-dashboard" class="aba-content active" style="display: block;">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+                <div style="background: rgba(59, 130, 246, 0.1); padding: 20px; border-radius: 8px; border-left: 4px solid var(--axon-blue);">
+                    <p style="color: #94a3b8; margin: 0 0 10px 0;">Total de Vendas</p>
+                    <p id="total-vendas" style="color: var(--axon-blue); font-size: 1.8rem; font-weight: bold; margin: 0;">R$ 0,00</p>
+                </div>
+                <div style="background: rgba(45, 212, 191, 0.1); padding: 20px; border-radius: 8px; border-left: 4px solid var(--axon-aurora);">
+                    <p style="color: #94a3b8; margin: 0 0 10px 0;">Total a Receber</p>
+                    <p id="total-receber" style="color: var(--axon-aurora); font-size: 1.8rem; font-weight: bold; margin: 0;">R$ 0,00</p>
+                </div>
+                <div style="background: rgba(168, 85, 247, 0.1); padding: 20px; border-radius: 8px; border-left: 4px solid #a855f7;">
+                    <p style="color: #94a3b8; margin: 0 0 10px 0;">Total de Gastos</p>
+                    <p id="total-gastos" style="color: #a855f7; font-size: 1.8rem; font-weight: bold; margin: 0;">R$ 0,00</p>
+                </div>
+            </div>
+            <div style="text-align: center; margin-top: 30px;">
+                <button class="btn-zerar" onclick="zerarDashboard()">🔄 ZERAR DASHBOARD</button>
+            </div>
+        </div>
+
+        <!-- ABA DEVEDORES -->
+        <div id="aba-devedores" class="aba-content" style="display: none;">
+            <h2 style="color: var(--axon-blue); margin-bottom: 20px; text-align: center;">Gerenciar Devedores</h2>
+            <div style="background: rgba(15, 23, 42, 0.7); padding: 20px; border-radius: 8px; margin-bottom: 30px; max-width: 600px; margin-left: auto; margin-right: auto;">
+                <input id="dev-nome" class="axon-input" placeholder="Nome do devedor" style="margin-bottom: 10px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                    <input id="dev-valor" class="axon-input" placeholder="Valor" type="number" step="0.01">
+                    <input id="dev-data" class="axon-input" placeholder="Data de vencimento" type="date">
+                </div>
+                <button class="btn-adicionar" onclick="adicionarDevedor()">➕ ADICIONAR DEVEDOR</button>
+            </div>
+            
+            <div style="margin-bottom: 20px; text-align: center;">
+                <h3 style="color: var(--axon-aurora); margin-bottom: 15px;">Devedores Registrados</h3>
+                <div style="display: flex; align-items: center; gap: 10px; background: rgba(15, 23, 42, 0.7); padding: 12px; border-radius: 8px; max-width: 600px; margin: 0 auto; margin-bottom: 20px;">
+                    <i class="fas fa-search"></i>
+                    <input id="filtro-devedores" class="axon-input" placeholder="🔍 Buscar devedor..." style="margin-bottom: 0; flex: 1; background: transparent; border: none; color: #94a3b8;" oninput="filtrarDevedores()">
+                </div>
+            </div>
+            <div id="lista-devedores" style="display: flex; flex-direction: column; gap: 10px; max-width: 600px; margin: 0 auto;"></div>
+        </div>
+
+        <!-- ABA VENDAS -->
+        <div id="aba-vendas" class="aba-content" style="display: none;">
+            <h2 style="color: var(--axon-gold); margin-bottom: 20px; text-align: center;">Gerenciar Vendas</h2>
+            <div style="background: rgba(15, 23, 42, 0.7); padding: 20px; border-radius: 8px; margin-bottom: 30px; max-width: 600px; margin-left: auto; margin-right: auto;">
+                <input id="vend-descricao" class="axon-input" placeholder="Descrição da venda" style="margin-bottom: 10px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                    <input id="vend-valor" class="axon-input" placeholder="Valor" type="number" step="0.01">
+                    <input id="vend-data" class="axon-input" placeholder="Data" type="date">
+                </div>
+                <button class="btn-adicionar" onclick="adicionarVenda()">➕ REGISTRAR VENDA</button>
+            </div>
+            <h3 style="color: var(--axon-gold); margin-bottom: 15px; text-align: center;">Total de vendas hoje: <span id="total-vend-hoje">R$ 0,00</span></h3>
+            <div id="lista-vendas" style="display: flex; flex-direction: column; gap: 10px; max-width: 600px; margin: 0 auto; text-align: center;"></div>
+        </div>
+
+        <!-- ABA GASTOS -->
+        <div id="aba-gastos" class="aba-content" style="display: none;">
+            <h2 style="color: #a855f7; margin-bottom: 20px; text-align: center;">Gerenciar Gastos</h2>
+            <div style="background: rgba(15, 23, 42, 0.7); padding: 20px; border-radius: 8px; margin-bottom: 30px; max-width: 600px; margin-left: auto; margin-right: auto;">
+                <input id="gast-descricao" class="axon-input" placeholder="Descrição do gasto" style="margin-bottom: 10px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                    <input id="gast-valor" class="axon-input" placeholder="Valor" type="number" step="0.01">
+                    <input id="gast-data" class="axon-input" placeholder="Data" type="date">
+                </div>
+                <button class="btn-adicionar" onclick="adicionarGasto()">➕ REGISTRAR GASTO</button>
+            </div>
+            <h3 style="color: #a855f7; margin-bottom: 15px; text-align: center;">Total de gastos hoje: <span id="total-gast-hoje">R$ 0,00</span></h3>
+            <div id="lista-gastos" style="display: flex; flex-direction: column; gap: 10px; max-width: 600px; margin: 0 auto; text-align: center;"></div>
+        </div>
+
+        <!-- ABA RELATÓRIOS -->
+        <div id="aba-relatorios" class="aba-content" style="display: none;">
+            <h2 style="color: #06b6d4; margin-bottom: 20px; text-align: center;">Gerador de Relatórios</h2>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 30px; max-width: 600px; margin-left: auto; margin-right: auto;">
+                <button class="btn-relatorio" onclick="gerarRelatorioPDF('completo')" style="width: 100%;">
+                    <i class="fas fa-file-pdf"></i> RELATÓRIO COMPLETO
+                </button>
+                <button class="btn-relatorio" onclick="gerarRelatorioPDF('devedores')" style="width: 100%;">
+                    <i class="fas fa-list"></i> DEVEDORES
+                </button>
+                <button class="btn-relatorio" onclick="gerarRelatorioPDF('vendas')" style="width: 100%;">
+                    <i class="fas fa-chart-line"></i> VENDAS
+                </button>
+                <button class="btn-relatorio" onclick="gerarRelatorioPDF('gastos')" style="width: 100%;">
+                    <i class="fas fa-calculator"></i> GASTOS
+                </button>
+            </div>
+
+            <div id="preview-relatorio" style="background: rgba(15, 23, 42, 0.7); padding: 30px; border-radius: 12px; border: 1px solid rgba(6, 182, 212, 0.2); max-width: 900px; margin: 0 auto; display: none;">
+                <div id="conteudo-relatorio" style="background: white; color: #1e293b; padding: 40px; border-radius: 8px; font-family: 'Inter', sans-serif;"></div>
+                <div style="display: flex; gap: 12px; margin-top: 20px; justify-content: center;">
+                    <button class="btn-acao" onclick="downloadRelatorioPDF()" style="width: 100%; max-width: 300px;">
+                        <i class="fas fa-download"></i> DOWNLOAD PDF
+                    </button>
+                    <button class="btn-acao-cancel" onclick="document.getElementById('preview-relatorio').style.display='none'" style="width: 100%; max-width: 300px;">
+                        <i class="fas fa-times"></i> FECHAR
+                    </button>
+                </div>
+            </div>
+
+            <div style="background: rgba(6, 182, 212, 0.1); padding: 20px; border-radius: 12px; border-left: 4px solid #06b6d4; margin-top: 30px; max-width: 900px; margin-left: auto; margin-right: auto;">
+                <h3 style="color: #06b6d4; margin-top: 0; margin-bottom: 10px;">
+                    <i class="fas fa-info-circle"></i> Sobre os Relatórios
+                </h3>
+                <p style="color: #64748b; margin: 0; line-height: 1.6; font-size: 0.9rem;">
+                    Gere relatórios profissionais em PDF contendo informações detalhadas sobre devedores, vendas e gastos. O relatório completo inclui um resumo executivo com totalizações, análises e dados organizados de forma clara e profissional.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    
+</body>
+</html>
