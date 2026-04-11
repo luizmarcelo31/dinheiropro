@@ -702,7 +702,16 @@
 
             try {
                 showToast('Preparando PDF...', 'info');
-                const canvas = await html2canvas(el, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+                const canvas = await html2canvas(el, {
+                    scale: 2,
+                    useCORS: true,
+                    backgroundColor: '#ffffff',
+                    // Remove Tailwind v4 stylesheets (que usam oklch) antes de capturar.
+                    // O conteúdo do relatório usa apenas inline styles, então o PDF fica intacto.
+                    onclone: (clonedDoc) => {
+                        clonedDoc.querySelectorAll('style, link[rel="stylesheet"]').forEach(s => s.remove());
+                    }
+                });
                 const img    = canvas.toDataURL('image/png');
                 const pdf    = new jspdf.jsPDF('p', 'mm', 'a4');
                 const w      = 190;
