@@ -108,15 +108,22 @@
             btn.disabled = true;
             btn.innerHTML = '<div class="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>Entrando...';
 
-            const { error } = await supabaseClient.auth.signInWithPassword({ email, password: senha });
+            try {
+                const { error } = await supabaseClient.auth.signInWithPassword({ email, password: senha });
 
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-sign-in-alt mr-2"></i>Entrar';
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-sign-in-alt mr-2"></i>Entrar';
 
-            if (error) {
-                showToast('Credenciais inválidas. Verifique e tente novamente.', 'error');
-            } else {
-                gerenciarTelas();
+                if (error) {
+                    showToast('Ocorreu um erro: ' + error.message, 'error');
+                } else {
+                    gerenciarTelas();
+                }
+            } catch (err) {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-sign-in-alt mr-2"></i>Entrar';
+                showToast('Falha de conexão. Verifique a URL no Supabase.', 'error');
+                console.error("Erro no login:", err);
             }
         }
 
