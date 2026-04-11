@@ -1,234 +1,580 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>DinheiroPro Login</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="style.css">
-    <script src="script.js" defer></script>
-    
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>DinheiroPro — Centro de Comando</title>
+  <meta name="description"
+    content="DinheiroPro: controle seus devedores, vendas e gastos em um único painel profissional.">
+
+  <!-- Tailwind CSS v4 via CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- PDF libs -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet">
+  <!-- Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <style type="text/tailwindcss">
+    @theme {
+      --color-brand: #3b82f6;
+      --color-brand-dark: #2563eb;
+      --color-surface: #1c2434;
+      --color-surface-2: #24303f;
+      --color-border: #2e3a4e;
+      --color-muted: #64748b;
+      --color-teal: #2dd4bf;
+      --color-gold: #f59e0b;
+      --color-violet: #8b5cf6;
+      --color-danger: #ef4444;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #1c2434; }
+    ::-webkit-scrollbar-thumb { background: #2e3a4e; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #3b82f6; }
+
+    /* Input focus ring */
+    .dp-input:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+    }
+
+    /* Sidebar active tab */
+    .tab-active {
+      background: rgba(59,130,246,0.12);
+      border-color: #3b82f6;
+      color: #60a5fa;
+    }
+
+    /* Card hover lift */
+    .card-lift { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+    .card-lift:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,0,0,0.2); }
+
+    /* Shimmer loader */
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+    .shimmer {
+      background: linear-gradient(90deg, #1c2434 25%, #24303f 50%, #1c2434 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+    }
+
+    /* Nebula background blobs */
+    .blob {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(100px);
+      opacity: 0.08;
+      pointer-events: none;
+      z-index: 0;
+      animation: drift 20s infinite alternate ease-in-out;
+    }
+    @keyframes drift {
+      from { transform: translate(0,0) scale(1); }
+      to   { transform: translate(60px, 50px) scale(1.1); }
+    }
+
+    /* Notification toast */
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to   { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes slideOut {
+      from { transform: translateX(0); opacity: 1; }
+      to   { transform: translateX(100%); opacity: 0; }
+    }
+    .toast-in  { animation: slideIn 0.3s ease forwards; }
+    .toast-out { animation: slideOut 0.3s ease forwards; }
+
+    /* Pulse badge */
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.4; }
+    }
+    .pulse-dot { animation: pulse-dot 2s ease-in-out infinite; }
+  </style>
 </head>
-<body>
-    <div class="nebulosa n1"></div>
-    <div class="nebulosa n2"></div>
 
-    <!-- TELA DE LOGIN -->
-    <div id="tela-login">
-        <div class="login-box">
-            <div class="logo-axon">Dinheiro</div>
-            <div class="subtitle">PRO</div>
+<body class="bg-[#111827] text-slate-200 min-h-screen overflow-x-hidden">
 
-            <input id="email" class="axon-input" placeholder="Seu Email de Acesso" type="email">
-            <input id="senha" class="axon-input" type="password" placeholder="Sua Senha">
+  <!-- Background blobs -->
+  <div class="blob w-96 h-96 bg-blue-500 top-0 right-0"></div>
+  <div class="blob w-96 h-96 bg-violet-600 bottom-0 left-0" style="animation-delay:-10s"></div>
 
-            <button class="btn-login" onclick="login()">ENTRAR</button>
-            
-            <p><a class="link-registro" onclick="abrirModalRegistro()">Não tem conta? Criar conta agora</a></p>
+  <!-- ============================================================
+       TELA DE LOGIN
+  ============================================================ -->
+  <div id="tela-login" class="relative z-10 min-h-screen flex flex-col items-center justify-center px-4 py-12">
+
+    <!-- Login card -->
+    <div class="w-full max-w-md bg-[#1c2434] border border-[#2e3a4e] rounded-2xl shadow-2xl p-8 mb-8">
+      <!-- Logo -->
+      <div class="text-center mb-8">
+        <div class="inline-flex items-center gap-2 mb-1">
+          <div class="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center">
+            <i class="fas fa-dollar-sign text-white text-sm"></i>
+          </div>
+          <span class="text-2xl font-extrabold tracking-widest text-white uppercase">Dinheiro</span>
+          <span class="text-2xl font-extrabold tracking-widest text-blue-400 uppercase">Pro</span>
         </div>
+        <p class="text-xs text-slate-500 tracking-[0.25em] uppercase mt-1">Centro de Comando Financeiro</p>
+      </div>
 
-        <div id="modal-registro" style="display: none;">
-            <div class="modal-card">
-                <div class="logo-axon" style="font-size: 2rem;">NOVA CONTA</div>
-                <p class="text-gray-400 text-sm mb-6 uppercase tracking-widest">Crie seu acesso ao DINHEIRO PRO</p>
-                
-                <input id="reg-email" class="axon-input" placeholder="Digite seu Email" type="email">
-                <input id="reg-senha" class="axon-input" type="password" placeholder="Crie uma Senha">
-                
-                <div class="flex mt-2">
-                    <button class="axon-input bg-gray-900 border-none w-1/3 cursor-pointer" style="margin-bottom: 0;" onclick="fecharModalRegistro()">VOLTAR</button>
-                    <button class="btn-login flex-grow" style="margin-top: 0;" onclick="executarRegistro()">CRIAR CONTA</button>
-                </div>
-            </div>
+      <!-- Fields -->
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">E-mail</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-3 flex items-center text-slate-500"><i
+                class="fas fa-envelope text-sm"></i></span>
+            <input id="email" type="email" placeholder="seu@email.com"
+              class="dp-input w-full bg-[#111827] border border-[#2e3a4e] rounded-lg pl-9 pr-4 py-3 text-sm text-white placeholder-slate-600 transition">
+          </div>
         </div>
-
-        <div class="tutorial-container">
-            <div class="tut-header">
-                <h2>O Sistema ERP Definitivo</h2>
-                <p>O <strong>DINHEIRO PRO Edition</strong> não é apenas um aplicativo de finanças; é um Centro de Comando de Negócios e Vida Pessoal. Ele foi desenhado para te dar o controle absoluto sobre o seu dinheiro, clientes e construção de patrimônio. Sem complicação, direto no seu bolso.</p>
-                <p style="margin-top: 10px; color: var(--axon-blue); font-weight: bold;">Descubra como o motor do DINHEIRO PRO funciona:</p>
-            </div>
-
-            <div class="tut-secao" style="border-color: var(--axon-blue);">
-                <h3> 1. Aba DEVEDORES (A Arte da Cobrança)</h3>
-                <p><span class="destaque">Para que serve:</span> Controlar quem te deve dinheiro, fiados ou serviços prestados a prazo.</p>
-                <p><span class="destaque">Como funciona:</span> Você registra o nome do devedor, o valor e a data. O DINHEIRO PRO controla tudo automaticamente.</p>
-            </div>
-            
-
-            <div class="tut-secao" style="border-color: var(--axon-aurora);">
-                <h3> 2. Aba VENDAS (Fluxo de Caixa Rápido)</h3>
-                <p><span class="destaque">Para que serve:</span> Registrar o dinheiro limpo que entra na hora. Fez um serviço? Vendeu um produto? É aqui que você anota.</p>
-                <p><span class="destaque">Inteligência:</span> O DINHEIRO PRO soma automaticamente o total de vendas do dia.</p>
-            </div>
-
-            <div class="tut-secao" style="border-color: #a855f7;">
-                <h3> 3. Aba GASTOS DIÁRIOS (O Ralo do Dinheiro)</h3>
-                <p><span class="destaque">Para que serve:</span> Mapear os pequenos gastos do dia a dia (café, Uber, almoço, fornecedor rápido).</p>
-                <p><span class="destaque">Flexível:</span> Registre todos os seus gastos e o DINHEIRO PRO faz o controle automático.</p>
-            </div>
-
-            <div style="text-align: center; margin-top: 40px;">
-                <p style="color: var(--axon-aurora); font-weight: 900; font-size: 1.2rem; text-transform: uppercase; letter-spacing: 2px;">O DINHEIRO PRO é a sua mente organizada em código.</p>
-            </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">Senha</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-3 flex items-center text-slate-500"><i
+                class="fas fa-lock text-sm"></i></span>
+            <input id="senha" type="password" placeholder="••••••••"
+              class="dp-input w-full bg-[#111827] border border-[#2e3a4e] rounded-lg pl-9 pr-4 py-3 text-sm text-white placeholder-slate-600 transition">
+          </div>
         </div>
+      </div>
+
+      <!-- Actions -->
+      <button id="btn-entrar" onclick="login()"
+        class="mt-6 w-full bg-blue-600 hover:bg-blue-500 active:scale-[0.98] text-white font-semibold py-3 rounded-lg text-sm tracking-wide transition-all">
+        <i class="fas fa-sign-in-alt mr-2"></i>Entrar
+      </button>
+
+      <p class="text-center mt-5 text-sm text-slate-500">
+        Não tem conta?
+        <a onclick="abrirModalRegistro()"
+          class="text-blue-400 hover:text-blue-300 cursor-pointer font-medium ml-1">Criar conta</a>
+      </p>
     </div>
 
-    <!-- PAINEL INTERNO (APÓS LOGIN) -->
-    <div id="painel-interno" style="display: none; width: 100%; margin: 0 auto;">
-        <!-- HEADER -->
-        <div class="painel-header" style="background: rgba(15, 23, 42, 0.7); padding: 20px; border-radius: 12px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
-            <div>
-                <h1 style="margin: 0; color: var(--axon-blue); font-size: 2rem;">DINHEIRO PRO</h1> 
-                <h2 style="margin: 0; color: var(--axon-blue); font-size: 1.5rem;">Centro de Comando</h2>
-                <p style="margin: 5px 0 0 0; color: var(--axon-aurora);">Bem-vindo, <span id="email-user">usuário</span></p>
-            </div>
-            <button class="btn-header" onclick="logout()">SAIR</button>
+    <!-- Feature cards (tutorial) -->
+    <div class="w-full max-w-2xl grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div class="bg-[#1c2434] border border-[#2e3a4e] rounded-xl p-5 card-lift">
+        <div class="w-9 h-9 rounded-lg bg-teal-500/15 flex items-center justify-center mb-3">
+          <i class="fas fa-users text-teal-400 text-sm"></i>
         </div>
-
-        <!-- ABAS -->
-        <div class="abas-nav" style="display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid rgba(59, 130, 246, 0.2); flex-wrap: wrap;">
-            <button class="tab-btn active" onclick="abrirAba('dashboard')"> DASHBOARD</button>
-            <button class="tab-btn" onclick="abrirAba('devedores')"> DEVEDORES</button>
-            <button class="tab-btn" onclick="abrirAba('vendas')"> VENDAS</button>
-            <button class="tab-btn" onclick="abrirAba('gastos')"> GASTOS</button>
-            <button class="tab-btn" onclick="abrirAba('relatorios')"> RELATÓRIOS</button>
+        <h3 class="font-semibold text-white text-sm mb-1">Devedores</h3>
+        <p class="text-xs text-slate-500 leading-relaxed">Controle quem te deve com datas de vencimento e status
+          automático.</p>
+      </div>
+      <div class="bg-[#1c2434] border border-[#2e3a4e] rounded-xl p-5 card-lift">
+        <div class="w-9 h-9 rounded-lg bg-amber-500/15 flex items-center justify-center mb-3">
+          <i class="fas fa-chart-line text-amber-400 text-sm"></i>
         </div>
-
-        <!-- CONTEÚDO DAS ABAS -->
-        
-        <!-- ABA DASHBOARD -->
-        <div id="aba-dashboard" class="aba-content active" style="display: block;">
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
-                <div style="background: rgba(59, 130, 246, 0.1); padding: 20px; border-radius: 8px; border-left: 4px solid var(--axon-blue);">
-                    <p style="color: #94a3b8; margin: 0 0 10px 0;">Total de Vendas</p>
-                    <p id="total-vendas" style="color: var(--axon-blue); font-size: 1.8rem; font-weight: bold; margin: 0;">R$ 0,00</p>
-                </div>
-                <div style="background: rgba(45, 212, 191, 0.1); padding: 20px; border-radius: 8px; border-left: 4px solid var(--axon-aurora);">
-                    <p style="color: #94a3b8; margin: 0 0 10px 0;">Total a Receber</p>
-                    <p id="total-receber" style="color: var(--axon-aurora); font-size: 1.8rem; font-weight: bold; margin: 0;">R$ 0,00</p>
-                </div>
-                <div style="background: rgba(168, 85, 247, 0.1); padding: 20px; border-radius: 8px; border-left: 4px solid #a855f7;">
-                    <p style="color: #94a3b8; margin: 0 0 10px 0;">Total de Gastos</p>
-                    <p id="total-gastos" style="color: #a855f7; font-size: 1.8rem; font-weight: bold; margin: 0;">R$ 0,00</p>
-                </div>
-            </div>
-            <div style="text-align: center; margin-top: 30px;">
-                <button class="btn-zerar" onclick="zerarDashboard()">🔄 ZERAR DASHBOARD</button>
-            </div>
+        <h3 class="font-semibold text-white text-sm mb-1">Vendas</h3>
+        <p class="text-xs text-slate-500 leading-relaxed">Registre entradas e acompanhe o faturamento diário em tempo
+          real.</p>
+      </div>
+      <div class="bg-[#1c2434] border border-[#2e3a4e] rounded-xl p-5 card-lift">
+        <div class="w-9 h-9 rounded-lg bg-violet-500/15 flex items-center justify-center mb-3">
+          <i class="fas fa-receipt text-violet-400 text-sm"></i>
         </div>
-
-        <!-- ABA DEVEDORES -->
-        <div id="aba-devedores" class="aba-content" style="display: none;">
-            <h2 style="color: var(--axon-blue); margin-bottom: 20px; text-align: center;">Gerenciar Devedores</h2>
-            <div style="background: rgba(15, 23, 42, 0.7); padding: 20px; border-radius: 8px; margin-bottom: 30px; max-width: 600px; margin-left: auto; margin-right: auto;">
-                <input id="dev-nome" class="axon-input" placeholder="Nome do devedor" style="margin-bottom: 10px;">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
-                    <input id="dev-valor" class="axon-input" placeholder="Valor" type="number" step="0.01">
-                    <input id="dev-data" class="axon-input" placeholder="Data de vencimento" type="date">
-                </div>
-                <button class="btn-adicionar" onclick="adicionarDevedor()">➕ ADICIONAR DEVEDOR</button>
-            </div>
-            
-            <div style="margin-bottom: 20px; text-align: center;">
-                <h3 style="color: var(--axon-aurora); margin-bottom: 15px;">Devedores Registrados</h3>
-                <div style="display: flex; align-items: center; gap: 10px; background: rgba(15, 23, 42, 0.7); padding: 12px; border-radius: 8px; max-width: 600px; margin: 0 auto; margin-bottom: 20px;">
-                    <i class="fas fa-search"></i>
-                    <input id="filtro-devedores" class="axon-input" placeholder="🔍 Buscar devedor..." style="margin-bottom: 0; flex: 1; background: transparent; border: none; color: #94a3b8;" oninput="filtrarDevedores()">
-                </div>
-            </div>
-            <div id="lista-devedores" style="display: flex; flex-direction: column; gap: 10px; max-width: 600px; margin: 0 auto;"></div>
-        </div>
-
-        <!-- ABA VENDAS -->
-        <div id="aba-vendas" class="aba-content" style="display: none;">
-            <h2 style="color: var(--axon-gold); margin-bottom: 20px; text-align: center;">Gerenciar Vendas</h2>
-            <div style="background: rgba(15, 23, 42, 0.7); padding: 20px; border-radius: 8px; margin-bottom: 30px; max-width: 600px; margin-left: auto; margin-right: auto;">
-                <input id="vend-descricao" class="axon-input" placeholder="Descrição da venda" style="margin-bottom: 10px;">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
-                    <input id="vend-valor" class="axon-input" placeholder="Valor" type="number" step="0.01">
-                    <input id="vend-data" class="axon-input" placeholder="Data" type="date">
-                </div>
-                <button class="btn-adicionar" onclick="adicionarVenda()">➕ REGISTRAR VENDA</button>
-            </div>
-            <h3 style="color: var(--axon-gold); margin-bottom: 15px; text-align: center;">Total de vendas hoje: <span id="total-vend-hoje">R$ 0,00</span></h3>
-            <div id="lista-vendas" style="display: flex; flex-direction: column; gap: 10px; max-width: 600px; margin: 0 auto; text-align: center;"></div>
-        </div>
-
-        <!-- ABA GASTOS -->
-        <div id="aba-gastos" class="aba-content" style="display: none;">
-            <h2 style="color: #a855f7; margin-bottom: 20px; text-align: center;">Gerenciar Gastos</h2>
-            <div style="background: rgba(15, 23, 42, 0.7); padding: 20px; border-radius: 8px; margin-bottom: 30px; max-width: 600px; margin-left: auto; margin-right: auto;">
-                <input id="gast-descricao" class="axon-input" placeholder="Descrição do gasto" style="margin-bottom: 10px;">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
-                    <input id="gast-valor" class="axon-input" placeholder="Valor" type="number" step="0.01">
-                    <input id="gast-data" class="axon-input" placeholder="Data" type="date">
-                </div>
-                <button class="btn-adicionar" onclick="adicionarGasto()">➕ REGISTRAR GASTO</button>
-            </div>
-            <h3 style="color: #a855f7; margin-bottom: 15px; text-align: center;">Total de gastos hoje: <span id="total-gast-hoje">R$ 0,00</span></h3>
-            <div id="lista-gastos" style="display: flex; flex-direction: column; gap: 10px; max-width: 600px; margin: 0 auto; text-align: center;"></div>
-        </div>
-
-        <!-- ABA RELATÓRIOS -->
-        <div id="aba-relatorios" class="aba-content" style="display: none;">
-            <h2 style="color: #06b6d4; margin-bottom: 20px; text-align: center;">Gerador de Relatórios</h2>
-
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 30px; max-width: 600px; margin-left: auto; margin-right: auto;">
-                <button class="btn-relatorio" onclick="gerarRelatorioPDF('completo')" style="width: 100%;">
-                    <i class="fas fa-file-pdf"></i> RELATÓRIO COMPLETO
-                </button>
-                <button class="btn-relatorio" onclick="gerarRelatorioPDF('devedores')" style="width: 100%;">
-                    <i class="fas fa-list"></i> DEVEDORES
-                </button>
-                <button class="btn-relatorio" onclick="gerarRelatorioPDF('vendas')" style="width: 100%;">
-                    <i class="fas fa-chart-line"></i> VENDAS
-                </button>
-                <button class="btn-relatorio" onclick="gerarRelatorioPDF('gastos')" style="width: 100%;">
-                    <i class="fas fa-calculator"></i> GASTOS
-                </button>
-            </div>
-
-            <div id="preview-relatorio" style="background: rgba(15, 23, 42, 0.7); padding: 30px; border-radius: 12px; border: 1px solid rgba(6, 182, 212, 0.2); max-width: 900px; margin: 0 auto; display: none;">
-                <div id="conteudo-relatorio" style="background: white; color: #1e293b; padding: 40px; border-radius: 8px; font-family: 'Inter', sans-serif;"></div>
-                <div style="display: flex; gap: 12px; margin-top: 20px; justify-content: center;">
-                    <button class="btn-acao" onclick="downloadRelatorioPDF()" style="width: 100%; max-width: 300px;">
-                        <i class="fas fa-download"></i> DOWNLOAD PDF
-                    </button>
-                    <button class="btn-acao-cancel" onclick="document.getElementById('preview-relatorio').style.display='none'" style="width: 100%; max-width: 300px;">
-                        <i class="fas fa-times"></i> FECHAR
-                    </button>
-                </div>
-            </div>
-
-<<<<<<< HEAD
-            <!-- RODAPÉ -->
-             <div style="margin-top: 40px; border-top: 1px solid #e2e8f0; padding-top: 10px;">
-        <p style="font-size: 11px; color: #94a3b8;">
-            Relatório gerado automaticamente pelo sistema
-        </p>
+        <h3 class="font-semibold text-white text-sm mb-1">Gastos & Relatórios</h3>
+        <p class="text-xs text-slate-500 leading-relaxed">Mapeie despesas e gere relatórios PDF executivos com um
+          clique.</p>
+      </div>
     </div>
-        </div>
-    </div>
-    </div>
+  </div>
 
-=======
-            <div style="background: rgba(6, 182, 212, 0.1); padding: 20px; border-radius: 12px; border-left: 4px solid #06b6d4; margin-top: 30px; max-width: 900px; margin-left: auto; margin-right: auto;">
-                <h3 style="color: #06b6d4; margin-top: 0; margin-bottom: 10px;">
-                    <i class="fas fa-info-circle"></i> Sobre os Relatórios
-                </h3>
-                <p style="color: #64748b; margin: 0; line-height: 1.6; font-size: 0.9rem;">
-                    Gere relatórios profissionais em PDF contendo informações detalhadas sobre devedores, vendas e gastos. O relatório completo inclui um resumo executivo com totalizações, análises e dados organizados de forma clara e profissional.
-                </p>
+  <!-- ============================================================
+       MODAL DE REGISTRO
+  ============================================================ -->
+  <div id="modal-registro"
+    class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+    <div class="w-full max-w-sm bg-[#1c2434] border border-[#2e3a4e] rounded-2xl shadow-2xl p-7">
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="font-bold text-white text-lg">Criar nova conta</h2>
+        <button onclick="fecharModalRegistro()" class="text-slate-500 hover:text-white transition text-lg">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">E-mail</label>
+          <input id="reg-email" type="email" placeholder="seu@email.com"
+            class="dp-input w-full bg-[#111827] border border-[#2e3a4e] rounded-lg px-4 py-3 text-sm text-white placeholder-slate-600 transition">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">Senha (mín. 6
+            caracteres)</label>
+          <input id="reg-senha" type="password" placeholder="••••••••"
+            class="dp-input w-full bg-[#111827] border border-[#2e3a4e] rounded-lg px-4 py-3 text-sm text-white placeholder-slate-600 transition">
+        </div>
+      </div>
+      <div class="flex gap-3 mt-6">
+        <button onclick="fecharModalRegistro()"
+          class="flex-1 bg-[#111827] border border-[#2e3a4e] hover:border-slate-500 text-slate-300 font-medium py-3 rounded-lg text-sm transition">
+          Cancelar
+        </button>
+        <button onclick="executarRegistro()"
+          class="flex-1 bg-blue-600 hover:bg-blue-500 active:scale-[0.98] text-white font-semibold py-3 rounded-lg text-sm transition-all">
+          Criar conta
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       PAINEL INTERNO
+  ============================================================ -->
+  <div id="painel-interno" class="hidden relative z-10 w-full min-h-screen flex flex-col">
+
+    <!-- Top bar -->
+    <header
+      class="w-full bg-[#1c2434] border-b border-[#2e3a4e] px-6 py-3 flex items-center justify-between sticky top-0 z-40">
+      <div class="flex items-center gap-3">
+        <div class="w-7 h-7 rounded-md bg-blue-500 flex items-center justify-center shrink-0">
+          <i class="fas fa-dollar-sign text-white text-xs"></i>
+        </div>
+        <span class="font-bold text-white text-base tracking-wide">DinheiroPro</span>
+        <span class="hidden sm:block text-slate-600 text-sm">|</span>
+        <span class="hidden sm:block text-xs text-slate-500 truncate max-w-[200px]" id="email-user">usuário</span>
+      </div>
+
+      <!-- Nav tabs (desktop) -->
+      <nav class="hidden md:flex items-center gap-1">
+        <button onclick="abrirAba('dashboard')" id="tab-dashboard"
+          class="tab-btn tab-active border rounded-lg px-4 py-1.5 text-xs font-semibold tracking-wide transition-all">
+          <i class="fas fa-tachometer-alt mr-1.5"></i>Dashboard
+        </button>
+        <button onclick="abrirAba('devedores')" id="tab-devedores"
+          class="tab-btn border border-transparent rounded-lg px-4 py-1.5 text-xs font-semibold text-slate-400 hover:text-white hover:border-[#2e3a4e] tracking-wide transition-all">
+          <i class="fas fa-users mr-1.5"></i>Devedores
+        </button>
+        <button onclick="abrirAba('vendas')" id="tab-vendas"
+          class="tab-btn border border-transparent rounded-lg px-4 py-1.5 text-xs font-semibold text-slate-400 hover:text-white hover:border-[#2e3a4e] tracking-wide transition-all">
+          <i class="fas fa-chart-line mr-1.5"></i>Vendas
+        </button>
+        <button onclick="abrirAba('gastos')" id="tab-gastos"
+          class="tab-btn border border-transparent rounded-lg px-4 py-1.5 text-xs font-semibold text-slate-400 hover:text-white hover:border-[#2e3a4e] tracking-wide transition-all">
+          <i class="fas fa-receipt mr-1.5"></i>Gastos
+        </button>
+        <button onclick="abrirAba('relatorios')" id="tab-relatorios"
+          class="tab-btn border border-transparent rounded-lg px-4 py-1.5 text-xs font-semibold text-slate-400 hover:text-white hover:border-[#2e3a4e] tracking-wide transition-all">
+          <i class="fas fa-file-alt mr-1.5"></i>Relatórios
+        </button>
+      </nav>
+
+      <button onclick="logout()"
+        class="flex items-center gap-2 text-xs text-slate-400 hover:text-white border border-transparent hover:border-[#2e3a4e] rounded-lg px-3 py-1.5 transition">
+        <i class="fas fa-sign-out-alt"></i><span class="hidden sm:inline">Sair</span>
+      </button>
+    </header>
+
+    <!-- Mobile bottom nav -->
+    <nav class="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#1c2434] border-t border-[#2e3a4e] flex">
+      <button onclick="abrirAba('dashboard')" id="mob-dashboard"
+        class="mob-tab flex-1 flex flex-col items-center py-2.5 text-blue-400 text-[10px] font-semibold gap-1">
+        <i class="fas fa-tachometer-alt text-base"></i>Dashboard
+      </button>
+      <button onclick="abrirAba('devedores')" id="mob-devedores"
+        class="mob-tab flex-1 flex flex-col items-center py-2.5 text-slate-500 text-[10px] font-semibold gap-1 transition">
+        <i class="fas fa-users text-base"></i>Devedores
+      </button>
+      <button onclick="abrirAba('vendas')" id="mob-vendas"
+        class="mob-tab flex-1 flex flex-col items-center py-2.5 text-slate-500 text-[10px] font-semibold gap-1 transition">
+        <i class="fas fa-chart-line text-base"></i>Vendas
+      </button>
+      <button onclick="abrirAba('gastos')" id="mob-gastos"
+        class="mob-tab flex-1 flex flex-col items-center py-2.5 text-slate-500 text-[10px] font-semibold gap-1 transition">
+        <i class="fas fa-receipt text-base"></i>Gastos
+      </button>
+      <button onclick="abrirAba('relatorios')" id="mob-relatorios"
+        class="mob-tab flex-1 flex flex-col items-center py-2.5 text-slate-500 text-[10px] font-semibold gap-1 transition">
+        <i class="fas fa-file-alt text-base"></i>Relatórios
+      </button>
+    </nav>
+
+    <!-- Content -->
+    <main class="flex-1 p-4 md:p-6 pb-24 md:pb-6 max-w-6xl mx-auto w-full">
+
+      <!-- ══════════════ ABA: DASHBOARD ══════════════ -->
+      <div id="aba-dashboard" class="aba-content">
+        <div class="mb-6 flex items-center justify-between">
+          <div>
+            <h1 class="text-xl font-bold text-white">Dashboard</h1>
+            <p class="text-xs text-slate-500 mt-0.5">Resumo financeiro geral</p>
+          </div>
+          <button onclick="zerarDashboard()"
+            class="flex items-center gap-2 text-xs font-medium text-slate-400 hover:text-red-400 border border-[#2e3a4e] hover:border-red-500/40 rounded-lg px-3 py-2 transition">
+            <i class="fas fa-trash-alt"></i>Zerar dados
+          </button>
+        </div>
+
+        <!-- KPI Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+          <div class="bg-[#1c2434] border border-[#2e3a4e] rounded-xl p-5 card-lift">
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Vendas</span>
+              <div class="w-8 h-8 bg-blue-500/15 rounded-lg flex items-center justify-center">
+                <i class="fas fa-chart-line text-blue-400 text-sm"></i>
+              </div>
             </div>
+            <p id="total-vendas" class="text-2xl font-bold text-white">R$ 0,00</p>
+            <p class="text-xs text-slate-500 mt-1">Faturamento acumulado</p>
+          </div>
+          <div class="bg-[#1c2434] border border-[#2e3a4e] rounded-xl p-5 card-lift">
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">A Receber</span>
+              <div class="w-8 h-8 bg-teal-500/15 rounded-lg flex items-center justify-center">
+                <i class="fas fa-clock text-teal-400 text-sm"></i>
+              </div>
+            </div>
+            <p id="total-receber" class="text-2xl font-bold text-white">R$ 0,00</p>
+            <p class="text-xs text-slate-500 mt-1">Devedores em aberto</p>
+          </div>
+          <div class="bg-[#1c2434] border border-[#2e3a4e] rounded-xl p-5 card-lift">
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Gastos</span>
+              <div class="w-8 h-8 bg-violet-500/15 rounded-lg flex items-center justify-center">
+                <i class="fas fa-receipt text-violet-400 text-sm"></i>
+              </div>
+            </div>
+            <p id="total-gastos" class="text-2xl font-bold text-white">R$ 0,00</p>
+            <p class="text-xs text-slate-500 mt-1">Despesas registradas</p>
+          </div>
         </div>
-    </div>
 
-    
->>>>>>> cf07f1143f06c35341c2b1a1d05e7cee93743e7b
+        <!-- Quick tip -->
+        <div class="bg-blue-500/5 border border-blue-500/20 rounded-xl p-4 flex items-start gap-3">
+          <i class="fas fa-info-circle text-blue-400 mt-0.5 shrink-0"></i>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            Use as abas no topo para navegar entre <strong class="text-slate-300">Devedores</strong>, <strong
+              class="text-slate-300">Vendas</strong>, <strong class="text-slate-300">Gastos</strong> e <strong
+              class="text-slate-300">Relatórios</strong>. Os dados são sincronizados automaticamente.
+          </p>
+        </div>
+      </div>
+
+      <!-- ══════════════ ABA: DEVEDORES ══════════════ -->
+      <div id="aba-devedores" class="aba-content hidden">
+        <div class="mb-6">
+          <h1 class="text-xl font-bold text-white">Devedores</h1>
+          <p class="text-xs text-slate-500 mt-0.5">Controle de cobranças e vencimentos</p>
+        </div>
+
+        <!-- Form -->
+        <div class="bg-[#1c2434] border border-[#2e3a4e] rounded-xl p-5 mb-6">
+          <h2 class="text-sm font-semibold text-slate-300 mb-4"><i
+              class="fas fa-plus-circle text-teal-400 mr-2"></i>Novo devedor</h2>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
+            <input id="dev-nome" placeholder="Nome do devedor"
+              class="dp-input bg-[#111827] border border-[#2e3a4e] rounded-lg px-4 py-2.5 text-sm text-white placeholder-slate-600 transition col-span-1 sm:col-span-1">
+            <input id="dev-valor" type="number" step="0.01" placeholder="Valor (R$)"
+              class="dp-input bg-[#111827] border border-[#2e3a4e] rounded-lg px-4 py-2.5 text-sm text-white placeholder-slate-600 transition">
+            <input id="dev-data" type="date"
+              class="dp-input bg-[#111827] border border-[#2e3a4e] rounded-lg px-4 py-2.5 text-sm text-white transition">
+          </div>
+          <button onclick="adicionarDevedor()"
+            class="bg-teal-600 hover:bg-teal-500 active:scale-[0.98] text-white text-xs font-semibold px-5 py-2.5 rounded-lg transition-all">
+            <i class="fas fa-plus mr-1.5"></i>Adicionar
+          </button>
+        </div>
+
+        <!-- Search -->
+        <div class="relative mb-4">
+          <span class="absolute inset-y-0 left-3 flex items-center text-slate-500"><i
+              class="fas fa-search text-sm"></i></span>
+          <input id="filtro-devedores" placeholder="Buscar devedor..." oninput="filtrarDevedores()"
+            class="dp-input w-full bg-[#1c2434] border border-[#2e3a4e] rounded-lg pl-9 pr-4 py-2.5 text-sm text-white placeholder-slate-600 transition">
+        </div>
+
+        <!-- List -->
+        <div id="lista-devedores" class="space-y-2"></div>
+      </div>
+
+      <!-- ══════════════ ABA: VENDAS ══════════════ -->
+      <div id="aba-vendas" class="aba-content hidden">
+        <div class="mb-6">
+          <h1 class="text-xl font-bold text-white">Vendas</h1>
+          <p class="text-xs text-slate-500 mt-0.5">Registro de entradas e faturamento</p>
+        </div>
+
+        <!-- Form -->
+        <div class="bg-[#1c2434] border border-[#2e3a4e] rounded-xl p-5 mb-6">
+          <h2 class="text-sm font-semibold text-slate-300 mb-4"><i
+              class="fas fa-plus-circle text-amber-400 mr-2"></i>Nova venda</h2>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
+            <input id="vend-descricao" placeholder="Descrição da venda"
+              class="dp-input bg-[#111827] border border-[#2e3a4e] rounded-lg px-4 py-2.5 text-sm text-white placeholder-slate-600 transition">
+            <input id="vend-valor" type="number" step="0.01" placeholder="Valor (R$)"
+              class="dp-input bg-[#111827] border border-[#2e3a4e] rounded-lg px-4 py-2.5 text-sm text-white placeholder-slate-600 transition">
+            <input id="vend-data" type="date"
+              class="dp-input bg-[#111827] border border-[#2e3a4e] rounded-lg px-4 py-2.5 text-sm text-white transition">
+          </div>
+          <button onclick="adicionarVenda()"
+            class="bg-amber-500 hover:bg-amber-400 active:scale-[0.98] text-white text-xs font-semibold px-5 py-2.5 rounded-lg transition-all">
+            <i class="fas fa-plus mr-1.5"></i>Registrar venda
+          </button>
+        </div>
+
+        <!-- Daily total -->
+        <div class="bg-[#1c2434] border border-[#2e3a4e] rounded-xl px-5 py-3.5 mb-4 flex items-center justify-between">
+          <span class="text-xs font-semibold text-slate-400">TOTAL VENDIDO HOJE</span>
+          <span id="total-vend-hoje" class="text-base font-bold text-amber-400">R$ 0,00</span>
+        </div>
+
+        <div id="lista-vendas" class="space-y-2"></div>
+      </div>
+
+      <!-- ══════════════ ABA: GASTOS ══════════════ -->
+      <div id="aba-gastos" class="aba-content hidden">
+        <div class="mb-6">
+          <h1 class="text-xl font-bold text-white">Gastos</h1>
+          <p class="text-xs text-slate-500 mt-0.5">Controle de despesas diárias</p>
+        </div>
+
+        <!-- Form -->
+        <div class="bg-[#1c2434] border border-[#2e3a4e] rounded-xl p-5 mb-6">
+          <h2 class="text-sm font-semibold text-slate-300 mb-4"><i
+              class="fas fa-plus-circle text-violet-400 mr-2"></i>Novo gasto</h2>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
+            <input id="gast-descricao" placeholder="Descrição do gasto"
+              class="dp-input bg-[#111827] border border-[#2e3a4e] rounded-lg px-4 py-2.5 text-sm text-white placeholder-slate-600 transition">
+            <input id="gast-valor" type="number" step="0.01" placeholder="Valor (R$)"
+              class="dp-input bg-[#111827] border border-[#2e3a4e] rounded-lg px-4 py-2.5 text-sm text-white placeholder-slate-600 transition">
+            <input id="gast-data" type="date"
+              class="dp-input bg-[#111827] border border-[#2e3a4e] rounded-lg px-4 py-2.5 text-sm text-white transition">
+          </div>
+          <button onclick="adicionarGasto()"
+            class="bg-violet-600 hover:bg-violet-500 active:scale-[0.98] text-white text-xs font-semibold px-5 py-2.5 rounded-lg transition-all">
+            <i class="fas fa-plus mr-1.5"></i>Registrar gasto
+          </button>
+        </div>
+
+        <!-- Daily total -->
+        <div class="bg-[#1c2434] border border-[#2e3a4e] rounded-xl px-5 py-3.5 mb-4 flex items-center justify-between">
+          <span class="text-xs font-semibold text-slate-400">TOTAL GASTO HOJE</span>
+          <span id="total-gast-hoje" class="text-base font-bold text-violet-400">R$ 0,00</span>
+        </div>
+
+        <div id="lista-gastos" class="space-y-2"></div>
+      </div>
+
+      <!-- ══════════════ ABA: RELATÓRIOS ══════════════ -->
+      <div id="aba-relatorios" class="aba-content hidden">
+        <div class="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h1 class="text-xl font-bold text-white">Relatórios</h1>
+            <p class="text-xs text-slate-500 mt-0.5">Geração de documentos executivos em PDF</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="pulse-dot w-2 h-2 rounded-full bg-green-400 inline-block"></span>
+            <span class="text-xs text-slate-500">Dados em tempo real</span>
+          </div>
+        </div>
+
+        <!-- Report type selector -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+          <button onclick="gerarRelatorioPDF('completo')"
+            class="group bg-[#1c2434] hover:bg-blue-500/10 border border-[#2e3a4e] hover:border-blue-500/40 rounded-xl p-4 text-left transition-all card-lift">
+            <div
+              class="w-9 h-9 bg-blue-500/15 rounded-lg flex items-center justify-center mb-3 group-hover:bg-blue-500/25 transition">
+              <i class="fas fa-layer-group text-blue-400"></i>
+            </div>
+            <p class="text-sm font-semibold text-white">Completo</p>
+            <p class="text-xs text-slate-500 mt-0.5">Todos os dados</p>
+          </button>
+          <button onclick="gerarRelatorioPDF('devedores')"
+            class="group bg-[#1c2434] hover:bg-teal-500/10 border border-[#2e3a4e] hover:border-teal-500/40 rounded-xl p-4 text-left transition-all card-lift">
+            <div
+              class="w-9 h-9 bg-teal-500/15 rounded-lg flex items-center justify-center mb-3 group-hover:bg-teal-500/25 transition">
+              <i class="fas fa-users text-teal-400"></i>
+            </div>
+            <p class="text-sm font-semibold text-white">Devedores</p>
+            <p class="text-xs text-slate-500 mt-0.5">Cobranças e status</p>
+          </button>
+          <button onclick="gerarRelatorioPDF('vendas')"
+            class="group bg-[#1c2434] hover:bg-amber-500/10 border border-[#2e3a4e] hover:border-amber-500/40 rounded-xl p-4 text-left transition-all card-lift">
+            <div
+              class="w-9 h-9 bg-amber-500/15 rounded-lg flex items-center justify-center mb-3 group-hover:bg-amber-500/25 transition">
+              <i class="fas fa-chart-line text-amber-400"></i>
+            </div>
+            <p class="text-sm font-semibold text-white">Vendas</p>
+            <p class="text-xs text-slate-500 mt-0.5">Faturamento detalhado</p>
+          </button>
+          <button onclick="gerarRelatorioPDF('gastos')"
+            class="group bg-[#1c2434] hover:bg-violet-500/10 border border-[#2e3a4e] hover:border-violet-500/40 rounded-xl p-4 text-left transition-all card-lift">
+            <div
+              class="w-9 h-9 bg-violet-500/15 rounded-lg flex items-center justify-center mb-3 group-hover:bg-violet-500/25 transition">
+              <i class="fas fa-receipt text-violet-400"></i>
+            </div>
+            <p class="text-sm font-semibold text-white">Gastos</p>
+            <p class="text-xs text-slate-500 mt-0.5">Despesas detalhadas</p>
+          </button>
+        </div>
+
+        <!-- Loading state -->
+        <div id="relatorio-loading" class="hidden bg-[#1c2434] border border-[#2e3a4e] rounded-xl p-8 text-center mb-4">
+          <div class="inline-flex items-center gap-3 text-slate-400 text-sm">
+            <div class="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+            Gerando relatório...
+          </div>
+        </div>
+
+        <!-- Report Preview -->
+        <div id="preview-relatorio" class="hidden">
+          <div class="flex items-center justify-between mb-3">
+            <h2 class="text-sm font-semibold text-slate-300"><i
+                class="fas fa-eye text-blue-400 mr-2"></i>Pré-visualização</h2>
+            <div class="flex gap-2">
+              <button onclick="downloadRelatorioPDF()"
+                class="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 active:scale-[0.98] text-white text-xs font-semibold px-4 py-2 rounded-lg transition-all">
+                <i class="fas fa-download"></i>Baixar PDF
+              </button>
+              <button onclick="document.getElementById('preview-relatorio').classList.add('hidden')"
+                class="flex items-center gap-2 bg-[#1c2434] border border-[#2e3a4e] hover:border-slate-500 text-slate-300 text-xs font-semibold px-4 py-2 rounded-lg transition">
+                <i class="fas fa-times"></i>Fechar
+              </button>
+            </div>
+          </div>
+          <!-- White paper preview -->
+          <div class="bg-[#1c2434] border border-[#2e3a4e] rounded-xl p-2 md:p-4 overflow-auto">
+            <div id="conteudo-relatorio"
+              class="bg-white text-gray-800 rounded-lg p-8 min-w-[640px] font-['Inter',sans-serif] text-sm leading-relaxed">
+            </div>
+
+            <div
+              style="background: rgba(6, 182, 212, 0.1); padding: 20px; border-radius: 12px; border-left: 4px solid #06b6d4; margin-top: 30px; max-width: 900px; margin-left: auto; margin-right: auto;">
+              <h3 style="color: #06b6d4; margin-top: 0; margin-bottom: 10px;">
+                <i class="fas fa-info-circle"></i> Sobre os Relatórios
+              </h3>
+              <p style="color: #64748b; margin: 0; line-height: 1.6; font-size: 0.9rem;">
+                Gere relatórios profissionais em PDF contendo informações detalhadas sobre devedores, vendas e gastos. O
+                relatório completo inclui um resumo executivo com totalizações, análises e dados organizados de forma
+                clara e profissional.
+              </p>
+            </div>
+          </div>
+        </div>
+
+
 </body>
+
 </html>
