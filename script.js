@@ -4,6 +4,7 @@
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let usuarioId = null;
+        let _relatorioCache = null; // cache do último relatório gerado
 
         // ═══════════════════════════════════════════
         // TOAST SYSTEM
@@ -491,7 +492,7 @@
         }
 
         // ═══════════════════════════════════════════
-        // RELATÓRIOS — VERSÃO PROFISSIONAL
+        // RELATÓRIOS
         // ═══════════════════════════════════════════
 
         async function gerarRelatorioPDF(tipo) {
@@ -511,66 +512,128 @@
                     supabaseClient.from('gastos').select('*').eq('usuario_id', usuarioId).order('data', { ascending: false }),
                 ]);
 
-                const devedores = devRes.data  || [];
-                const vendas    = vendRes.data  || [];
-                const gastos    = gastRes.data  || [];
-
+                const devedores    = devRes.data   || [];
+                const vendas       = vendRes.data   || [];
+                const gastos       = gastRes.data   || [];
                 const totalVendas  = vendas.reduce((s, v) => s + v.valor, 0);
                 const totalGastos  = gastos.reduce((s, g) => s + g.valor, 0);
                 const totalReceber = devedores.reduce((s, d) => s + d.valor, 0);
                 const lucro        = totalVendas - totalGastos;
-                const hoje         = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
-                const agora        = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
                 const tituloTipo   = { completo: 'Relatório Completo', devedores: 'Relatório de Devedores', vendas: 'Relatório de Vendas', gastos: 'Relatório de Gastos' };
 
+                // Salva cache para o download
+                _relatorioCache = { tipo, devedores, vendas, gastos, totalVendas, totalGastos, totalReceber, lucro };
+
+                // ── Preview responsivo dark-mode ──
+                const lucroColorClass = lucro >= 0 ? 'text-emerald-400' : 'text-red-400';
+                const lucroBgClass    = lucro >= 0 ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-red-500/10 border-red-500/30';
+
+                const hoje = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                const agora = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
                 let html = `
-                <div style="font-family:'Inter',Arial,sans-serif;color:#1e293b;line-height:1.5;">
-                  <div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:20px;border-bottom:2px solid #e2e8f0;margin-bottom:24px;">
+                <!-- Header do preview -->
+                <div class="bg-[#1c2434] border border-[#2e3a4e] rounded-xl p-4 flex items-center justify-between">
+                  <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 bg-blue-500 rounded-lg flex items-center justify-center shrink-0"><i class="fas fa-dollar-sign text-white text-sm"></i></div>
                     <div>
-                      <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
-                        <div style="background:#3b82f6;width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;">
-                          <span style="color:white;font-size:14px;font-weight:900;">$</span>
-                        </div>
-                        <span style="font-size:20px;font-weight:800;color:#0f172a;letter-spacing:1px;">DinheiroPro</span>
-                      </div>
-                      <p style="font-size:11px;color:#64748b;margin:0;letter-spacing:0.5px;text-transform:uppercase;">${tituloTipo[tipo]}</p>
-                    </div>
-                    <div style="text-align:right;">
-                      <p style="font-size:11px;color:#64748b;margin:0;">Gerado em</p>
-                      <p style="font-size:13px;font-weight:600;color:#334155;margin:2px 0 0;">${hoje} às ${agora}</p>
+                      <p class="font-bold text-white text-sm">DinheiroPro</p>
+                      <p class="text-xs text-slate-500">${tituloTipo[tipo]}</p>
                     </div>
                   </div>
-                  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:28px;">
-                    <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:14px;">
-                      <p style="font-size:10px;color:#16a34a;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 6px;">Total Vendas</p>
-                      <p style="font-size:20px;font-weight:800;color:#15803d;margin:0;">R$ ${totalVendas.toFixed(2)}</p>
-                    </div>
-                    <div style="background:#fefce8;border:1px solid #fde68a;border-radius:10px;padding:14px;">
-                      <p style="font-size:10px;color:#b45309;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 6px;">A Receber</p>
-                      <p style="font-size:20px;font-weight:800;color:#92400e;margin:0;">R$ ${totalReceber.toFixed(2)}</p>
-                    </div>
-                    <div style="background:${lucro >= 0 ? '#f0fdf4' : '#fef2f2'};border:1px solid ${lucro >= 0 ? '#bbf7d0' : '#fecaca'};border-radius:10px;padding:14px;">
-                      <p style="font-size:10px;color:${lucro >= 0 ? '#16a34a' : '#dc2626'};font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 6px;">${lucro >= 0 ? 'Lucro Líquido' : 'Prejuízo'}</p>
-                      <p style="font-size:20px;font-weight:800;color:${lucro >= 0 ? '#15803d' : '#991b1b'};margin:0;">R$ ${Math.abs(lucro).toFixed(2)}</p>
-                    </div>
-                  </div>`;
+                  <div class="text-right">
+                    <p class="text-xs text-slate-500">Gerado em</p>
+                    <p class="text-xs font-semibold text-slate-300">${hoje} · ${agora}</p>
+                  </div>
+                </div>
 
-                if (tipo === 'completo' || tipo === 'devedores') html += secaoDevedoresPDF(devedores, totalReceber);
-                if (tipo === 'completo' || tipo === 'vendas')    html += secaoVendasPDF(vendas, totalVendas);
-                if (tipo === 'completo' || tipo === 'gastos')    html += secaoGastosPDF(gastos, totalGastos);
-                if (tipo === 'completo') html += secaoResumoPDF(totalVendas, totalGastos, totalReceber, lucro);
-
-                html += `
-                  <div style="border-top:1px solid #e2e8f0;padding-top:14px;margin-top:28px;display:flex;justify-content:space-between;align-items:center;">
-                    <p style="font-size:10px;color:#94a3b8;margin:0;">Este documento é confidencial.</p>
-                    <p style="font-size:10px;color:#94a3b8;margin:0;">DinheiroPro © ${new Date().getFullYear()}</p>
+                <!-- KPIs -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div class="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-4">
+                    <p class="text-xs font-bold text-emerald-400 uppercase tracking-wider mb-1">Total Vendas</p>
+                    <p class="text-xl font-extrabold text-white">R$ ${totalVendas.toFixed(2)}</p>
+                    <p class="text-xs text-slate-500 mt-1">${vendas.length} registro(s)</p>
+                  </div>
+                  <div class="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4">
+                    <p class="text-xs font-bold text-amber-400 uppercase tracking-wider mb-1">A Receber</p>
+                    <p class="text-xl font-extrabold text-white">R$ ${totalReceber.toFixed(2)}</p>
+                    <p class="text-xs text-slate-500 mt-1">${devedores.length} devedor(es)</p>
+                  </div>
+                  <div class="${lucroBgClass} border rounded-xl p-4">
+                    <p class="text-xs font-bold ${lucroColorClass} uppercase tracking-wider mb-1">${lucro >= 0 ? 'Lucro Líquido' : 'Prejuízo'}</p>
+                    <p class="text-xl font-extrabold text-white">R$ ${Math.abs(lucro).toFixed(2)}</p>
+                    <p class="text-xs text-slate-500 mt-1">Vendas - Gastos</p>
                   </div>
                 </div>`;
+
+                const tabelaPreview = (titulo, iconClass, iconColor, colunas, linhas) => {
+                    if (!linhas.length) return `<div class="bg-[#1c2434] border border-dashed border-[#2e3a4e] rounded-xl p-5 text-center text-slate-600 text-xs">Sem registros em ${titulo}</div>`;
+                    return `
+                    <div class="bg-[#1c2434] border border-[#2e3a4e] rounded-xl overflow-hidden">
+                      <div class="px-4 py-3 border-b border-[#2e3a4e] flex items-center gap-2">
+                        <div class="w-6 h-6 rounded-md ${iconColor} flex items-center justify-center"><i class="fas ${iconClass} text-xs"></i></div>
+                        <span class="text-xs font-bold text-white uppercase tracking-wider">${titulo}</span>
+                      </div>
+                      <div class="overflow-x-auto">
+                        <table class="w-full text-xs">
+                          <thead><tr class="bg-[#0f172a]">${colunas.map(c => `<th class="px-4 py-2.5 text-left text-slate-500 font-semibold uppercase tracking-wider">${c}</th>`).join('')}</tr></thead>
+                          <tbody>${linhas}</tbody>
+                        </table>
+                      </div>
+                    </div>`;
+                };
+
+                const hj = new Date().toISOString().split('T')[0];
+
+                if (tipo === 'completo' || tipo === 'devedores') {
+                    const linhas = devedores.map((d, i) => {
+                        const atrasado = d.data_vencimento < hj && d.status === 'Pendente';
+                        return `<tr class="border-b border-[#2e3a4e] ${i % 2 === 0 ? '' : 'bg-[#0f172a]/40'}">
+                          <td class="px-4 py-2.5 text-slate-200 font-medium">${d.nome}</td>
+                          <td class="px-4 py-2.5 text-teal-400 font-bold">R$ ${d.valor.toFixed(2)}</td>
+                          <td class="px-4 py-2.5 text-slate-400">${formatarData(d.data_vencimento)}</td>
+                          <td class="px-4 py-2.5"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${atrasado ? 'bg-red-500/20 text-red-400' : 'bg-emerald-500/20 text-emerald-400'}">${atrasado ? 'Atrasado' : d.status}</span></td>
+                        </tr>`;
+                    }).join('');
+                    html += tabelaPreview('Devedores', 'fa-user', 'bg-teal-500/20 text-teal-400', ['Nome', 'Valor', 'Vencimento', 'Status'], linhas);
+                }
+
+                if (tipo === 'completo' || tipo === 'vendas') {
+                    const linhas = vendas.map((v, i) => `<tr class="border-b border-[#2e3a4e] ${i % 2 === 0 ? '' : 'bg-[#0f172a]/40'}">
+                      <td class="px-4 py-2.5 text-slate-200 font-medium">${v.descricao}</td>
+                      <td class="px-4 py-2.5 text-amber-400 font-bold">R$ ${v.valor.toFixed(2)}</td>
+                      <td class="px-4 py-2.5 text-slate-400">${formatarData(v.data)}</td>
+                    </tr>`).join('');
+                    html += tabelaPreview('Vendas', 'fa-tag', 'bg-amber-500/20 text-amber-400', ['Descrição', 'Valor', 'Data'], linhas);
+                }
+
+                if (tipo === 'completo' || tipo === 'gastos') {
+                    const linhas = gastos.map((g, i) => `<tr class="border-b border-[#2e3a4e] ${i % 2 === 0 ? '' : 'bg-[#0f172a]/40'}">
+                      <td class="px-4 py-2.5 text-slate-200 font-medium">${g.descricao}</td>
+                      <td class="px-4 py-2.5 text-violet-400 font-bold">-R$ ${g.valor.toFixed(2)}</td>
+                      <td class="px-4 py-2.5 text-slate-400">${formatarData(g.data)}</td>
+                    </tr>`).join('');
+                    html += tabelaPreview('Gastos', 'fa-receipt', 'bg-violet-500/20 text-violet-400', ['Descrição', 'Valor', 'Data'], linhas);
+                }
+
+                if (tipo === 'completo') {
+                    html += `
+                    <div class="bg-[#0f172a] border border-[#1e293b] rounded-xl p-5">
+                      <p class="text-xs font-bold text-blue-400 uppercase tracking-wider mb-4">Resumo Executivo</p>
+                      <div class="space-y-2.5">
+                        <div class="flex justify-between items-center py-2 border-b border-[#1e293b]"><span class="text-slate-400 text-xs">Total de Vendas</span><span class="font-bold text-amber-400 text-sm">R$ ${totalVendas.toFixed(2)}</span></div>
+                        <div class="flex justify-between items-center py-2 border-b border-[#1e293b]"><span class="text-slate-400 text-xs">Total de Gastos</span><span class="font-bold text-violet-400 text-sm">R$ ${totalGastos.toFixed(2)}</span></div>
+                        <div class="flex justify-between items-center py-2 border-b border-[#1e293b]"><span class="text-slate-400 text-xs">Total a Receber</span><span class="font-bold text-teal-400 text-sm">R$ ${totalReceber.toFixed(2)}</span></div>
+                        <div class="flex justify-between items-center pt-2"><span class="text-white font-bold text-sm">${lucro >= 0 ? 'Lucro Líquido' : 'Prejuízo'}</span><span class="font-extrabold text-xl ${lucroColorClass}">R$ ${Math.abs(lucro).toFixed(2)}</span></div>
+                      </div>
+                    </div>`;
+                }
 
                 conteudo.innerHTML = html;
 
             } catch (e) {
                 showToast('Erro ao gerar relatório: ' + e.message, 'error');
+                console.error(e);
             } finally {
                 loading.classList.add('hidden');
                 preview.classList.remove('hidden');
@@ -578,166 +641,200 @@
             }
         }
 
-        function secaoDevedoresPDF(devedores, total) {
-            const hoje = new Date().toISOString().split('T')[0];
-            if (!devedores.length) return secaoVazia('Devedores', 'Nenhum devedor registrado.');
-            return `
-            <div style="margin-bottom:24px;">
-              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-                <h2 style="font-size:13px;font-weight:700;color:#0f172a;margin:0;text-transform:uppercase;letter-spacing:0.5px;">Devedores</h2>
-                <span style="font-size:12px;font-weight:600;color:#0891b2;">Total a receber: R$ ${total.toFixed(2)}</span>
-              </div>
-              <table style="width:100%;border-collapse:collapse;font-size:11.5px;">
-                <thead>
-                  <tr style="background:#f8fafc;">
-                    <th style="padding:10px 12px;text-align:left;border-bottom:2px solid #e2e8f0;color:#475569;font-weight:600;font-size:10px;text-transform:uppercase;">Nome</th>
-                    <th style="padding:10px 12px;text-align:right;border-bottom:2px solid #e2e8f0;color:#475569;font-weight:600;font-size:10px;text-transform:uppercase;">Valor</th>
-                    <th style="padding:10px 12px;text-align:center;border-bottom:2px solid #e2e8f0;color:#475569;font-weight:600;font-size:10px;text-transform:uppercase;">Vencimento</th>
-                    <th style="padding:10px 12px;text-align:center;border-bottom:2px solid #e2e8f0;color:#475569;font-weight:600;font-size:10px;text-transform:uppercase;">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${devedores.map((d, i) => {
-                    const atrasado = d.data_vencimento < hoje && d.status === 'Pendente';
-                    return `<tr style="background:${i % 2 === 0 ? '#fff' : '#f8fafc'};">
-                      <td style="padding:9px 12px;border-bottom:1px solid #f1f5f9;color:#1e293b;font-weight:500;">${d.nome}</td>
-                      <td style="padding:9px 12px;border-bottom:1px solid #f1f5f9;text-align:right;color:#0891b2;font-weight:700;">R$ ${d.valor.toFixed(2)}</td>
-                      <td style="padding:9px 12px;border-bottom:1px solid #f1f5f9;text-align:center;color:#64748b;">${formatarData(d.data_vencimento)}</td>
-                      <td style="padding:9px 12px;border-bottom:1px solid #f1f5f9;text-align:center;">
-                        <span style="background:${atrasado ? '#fee2e2' : '#dcfce7'};color:${atrasado ? '#dc2626' : '#16a34a'};padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600;">
-                          ${atrasado ? 'Atrasado' : d.status}
-                        </span>
-                      </td>
-                    </tr>`;
-                  }).join('')}
-                </tbody>
-              </table>
-            </div>`;
-        }
-
-        function secaoVendasPDF(vendas, total) {
-            if (!vendas.length) return secaoVazia('Vendas', 'Nenhuma venda registrada.');
-            return `
-            <div style="margin-bottom:24px;">
-              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-                <h2 style="font-size:13px;font-weight:700;color:#0f172a;margin:0;text-transform:uppercase;letter-spacing:0.5px;">Vendas</h2>
-                <span style="font-size:12px;font-weight:600;color:#d97706;">Total faturado: R$ ${total.toFixed(2)}</span>
-              </div>
-              <table style="width:100%;border-collapse:collapse;font-size:11.5px;">
-                <thead>
-                  <tr style="background:#f8fafc;">
-                    <th style="padding:10px 12px;text-align:left;border-bottom:2px solid #e2e8f0;color:#475569;font-weight:600;font-size:10px;text-transform:uppercase;">Descrição</th>
-                    <th style="padding:10px 12px;text-align:right;border-bottom:2px solid #e2e8f0;color:#475569;font-weight:600;font-size:10px;text-transform:uppercase;">Valor</th>
-                    <th style="padding:10px 12px;text-align:center;border-bottom:2px solid #e2e8f0;color:#475569;font-weight:600;font-size:10px;text-transform:uppercase;">Data</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${vendas.map((v, i) => `
-                    <tr style="background:${i % 2 === 0 ? '#fff' : '#f8fafc'};">
-                      <td style="padding:9px 12px;border-bottom:1px solid #f1f5f9;color:#1e293b;font-weight:500;">${v.descricao}</td>
-                      <td style="padding:9px 12px;border-bottom:1px solid #f1f5f9;text-align:right;color:#d97706;font-weight:700;">R$ ${v.valor.toFixed(2)}</td>
-                      <td style="padding:9px 12px;border-bottom:1px solid #f1f5f9;text-align:center;color:#64748b;">${formatarData(v.data)}</td>
-                    </tr>`).join('')}
-                </tbody>
-              </table>
-            </div>`;
-        }
-
-        function secaoGastosPDF(gastos, total) {
-            if (!gastos.length) return secaoVazia('Gastos', 'Nenhum gasto registrado.');
-            return `
-            <div style="margin-bottom:24px;">
-              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-                <h2 style="font-size:13px;font-weight:700;color:#0f172a;margin:0;text-transform:uppercase;letter-spacing:0.5px;">Gastos</h2>
-                <span style="font-size:12px;font-weight:600;color:#7c3aed;">Total de despesas: R$ ${total.toFixed(2)}</span>
-              </div>
-              <table style="width:100%;border-collapse:collapse;font-size:11.5px;">
-                <thead>
-                  <tr style="background:#f8fafc;">
-                    <th style="padding:10px 12px;text-align:left;border-bottom:2px solid #e2e8f0;color:#475569;font-weight:600;font-size:10px;text-transform:uppercase;">Descrição</th>
-                    <th style="padding:10px 12px;text-align:right;border-bottom:2px solid #e2e8f0;color:#475569;font-weight:600;font-size:10px;text-transform:uppercase;">Valor</th>
-                    <th style="padding:10px 12px;text-align:center;border-bottom:2px solid #e2e8f0;color:#475569;font-weight:600;font-size:10px;text-transform:uppercase;">Data</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${gastos.map((g, i) => `
-                    <tr style="background:${i % 2 === 0 ? '#fff' : '#f8fafc'};">
-                      <td style="padding:9px 12px;border-bottom:1px solid #f1f5f9;color:#1e293b;font-weight:500;">${g.descricao}</td>
-                      <td style="padding:9px 12px;border-bottom:1px solid #f1f5f9;text-align:right;color:#7c3aed;font-weight:700;">-R$ ${g.valor.toFixed(2)}</td>
-                      <td style="padding:9px 12px;border-bottom:1px solid #f1f5f9;text-align:center;color:#64748b;">${formatarData(g.data)}</td>
-                    </tr>`).join('')}
-                </tbody>
-              </table>
-            </div>`;
-        }
-
-        function secaoResumoPDF(totalVendas, totalGastos, totalReceber, lucro) {
-            return `
-            <div style="background:#0f172a;border-radius:12px;padding:20px;margin-bottom:24px;">
-              <h2 style="font-size:13px;font-weight:700;color:#60a5fa;margin:0 0 16px;text-transform:uppercase;letter-spacing:0.5px;">Resumo Executivo</h2>
-              <table style="width:100%;border-collapse:collapse;">
-                <tr>
-                  <td style="padding:10px 0;border-bottom:1px solid #1e293b;color:#94a3b8;font-size:12px;">Total de Vendas</td>
-                  <td style="padding:10px 0;border-bottom:1px solid #1e293b;text-align:right;color:#fbbf24;font-weight:700;font-size:14px;">R$ ${totalVendas.toFixed(2)}</td>
-                </tr>
-                <tr>
-                  <td style="padding:10px 0;border-bottom:1px solid #1e293b;color:#94a3b8;font-size:12px;">Total de Gastos</td>
-                  <td style="padding:10px 0;border-bottom:1px solid #1e293b;text-align:right;color:#a78bfa;font-weight:700;font-size:14px;">R$ ${totalGastos.toFixed(2)}</td>
-                </tr>
-                <tr>
-                  <td style="padding:10px 0;border-bottom:1px solid #1e293b;color:#94a3b8;font-size:12px;">Total a Receber</td>
-                  <td style="padding:10px 0;border-bottom:1px solid #1e293b;text-align:right;color:#34d399;font-weight:700;font-size:14px;">R$ ${totalReceber.toFixed(2)}</td>
-                </tr>
-                <tr>
-                  <td style="padding:12px 0 0;color:#e2e8f0;font-size:13px;font-weight:700;">${lucro >= 0 ? 'Lucro Líquido' : 'Prejuízo'}</td>
-                  <td style="padding:12px 0 0;text-align:right;color:${lucro >= 0 ? '#4ade80' : '#f87171'};font-weight:800;font-size:18px;">R$ ${Math.abs(lucro).toFixed(2)}</td>
-                </tr>
-              </table>
-            </div>`;
-        }
-
-        function secaoVazia(nome, msg) {
-            return `<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:16px;margin-bottom:20px;text-align:center;">
-                      <p style="font-size:11px;font-weight:600;color:#94a3b8;text-transform:uppercase;margin:0 0 4px;">${nome}</p>
-                      <p style="font-size:12px;color:#cbd5e1;margin:0;">${msg}</p>
-                    </div>`;
-        }
-
         async function downloadRelatorioPDF() {
-            const el = document.getElementById('conteudo-relatorio');
-            if (!el || !el.innerHTML.trim()) { showToast('Gere um relatório primeiro.', 'warning'); return; }
+            if (!_relatorioCache) { showToast('Gere um relatório primeiro.', 'warning'); return; }
+
+            const { tipo, devedores, vendas, gastos, totalVendas, totalGastos, totalReceber, lucro } = _relatorioCache;
+            const tituloTipo = { completo: 'Relatório Completo', devedores: 'Relatório de Devedores', vendas: 'Relatório de Vendas', gastos: 'Relatório de Gastos' };
+            const hoje  = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            const agora = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+            const hj    = new Date().toISOString().split('T')[0];
+
+            showToast('Gerando PDF vetorial...', 'info');
 
             try {
-                showToast('Preparando PDF...', 'info');
-                const canvas = await html2canvas(el, {
-                    scale: 2,
-                    useCORS: true,
-                    backgroundColor: '#ffffff',
-                    // Remove Tailwind v4 stylesheets (que usam oklch) antes de capturar.
-                    // O conteúdo do relatório usa apenas inline styles, então o PDF fica intacto.
-                    onclone: (clonedDoc) => {
-                        clonedDoc.querySelectorAll('style, link[rel="stylesheet"]').forEach(s => s.remove());
-                    }
-                });
-                const img    = canvas.toDataURL('image/png');
-                const pdf    = new jspdf.jsPDF('p', 'mm', 'a4');
-                const w      = 190;
-                const h      = (canvas.height * w) / canvas.width;
-                const pageH  = 277;
+                const pdf = new jspdf.jsPDF('p', 'mm', 'a4');
+                const W = 210, H = 297, ml = 14, mr = 14, uw = W - ml - mr;
 
-                pdf.addImage(img, 'PNG', 10, 10, w, Math.min(h, pageH));
-                let pos = h + 10;
-                while (pos > pageH) {
-                    pdf.addPage();
-                    pos -= pageH;
-                    pdf.addImage(img, 'PNG', 10, 10 - pos, w, h);
+                // ─── FUNÇÃO: desenha cabeçalho em cada página ───
+                const desenharCabecalho = () => {
+                    // Barra azul
+                    pdf.setFillColor(37, 99, 235);
+                    pdf.rect(0, 0, W, 17, 'F');
+                    // Faixa accent
+                    pdf.setFillColor(96, 165, 250);
+                    pdf.rect(0, 15, W, 2, 'F');
+                    // Ícone $
+                    pdf.setFillColor(255, 255, 255);
+                    pdf.roundedRect(ml, 3.5, 10, 10, 1.5, 1.5, 'F');
+                    pdf.setTextColor(37, 99, 235);
+                    pdf.setFontSize(9); pdf.setFont('helvetica', 'bold');
+                    pdf.text('$', ml + 5, 11, { align: 'center' });
+                    // Nome
+                    pdf.setTextColor(255, 255, 255);
+                    pdf.setFontSize(13); pdf.setFont('helvetica', 'bold');
+                    pdf.text('DINHEIRO', ml + 13, 11);
+                    pdf.setTextColor(147, 197, 253);
+                    pdf.text('PRO', ml + 41.5, 11);
+                    // Tipo do relatório
+                    pdf.setTextColor(255, 255, 255);
+                    pdf.setFontSize(6.5); pdf.setFont('helvetica', 'normal');
+                    pdf.text(tituloTipo[tipo].toUpperCase(), W - mr, 10, { align: 'right' });
+                };
+                desenharCabecalho();
+
+                let y = 23;
+
+                // ─── Linha de meta ───
+                pdf.setTextColor(100, 116, 139); pdf.setFontSize(7); pdf.setFont('helvetica', 'normal');
+                pdf.text(`Gerado em ${hoje} às ${agora}  •  Documento Confidencial`, ml, y);
+                y += 9;
+
+                // ─── KPI CARDS ───
+                const cardW = (uw - 8) / 3;
+                const cards = [
+                    { label: 'TOTAL VENDAS',   value: `R$ ${totalVendas.toFixed(2)}`,  sub: `${vendas.length} registros`,   bg: [240,253,244], bd: [34,197,94],  lc: [22,163,74],  vc: [21,128,61]  },
+                    { label: 'A RECEBER',       value: `R$ ${totalReceber.toFixed(2)}`, sub: `${devedores.length} devedores`, bg: [254,252,232], bd: [234,179,8], lc: [180,83,9],   vc: [146,64,14]  },
+                    { label: lucro>=0?'LUCRO':'PREJUÍZO', value: `R$ ${Math.abs(lucro).toFixed(2)}`, sub: lucro>=0?'Resultado positivo':'Resultado negativo',
+                      bg: lucro>=0?[240,253,244]:[254,242,242], bd: lucro>=0?[34,197,94]:[239,68,68], lc: lucro>=0?[22,163,74]:[220,38,38], vc: lucro>=0?[21,128,61]:[153,27,27] },
+                ];
+                cards.forEach((c, i) => {
+                    const cx = ml + i * (cardW + 4);
+                    pdf.setFillColor(...c.bg); pdf.roundedRect(cx, y, cardW, 26, 2, 2, 'F');
+                    pdf.setFillColor(...c.bd); pdf.roundedRect(cx, y, 2.5, 26, 1, 1, 'F');
+                    pdf.setDrawColor(...c.bd); pdf.setLineWidth(0.3); pdf.roundedRect(cx, y, cardW, 26, 2, 2, 'S');
+                    pdf.setTextColor(...c.lc); pdf.setFontSize(6); pdf.setFont('helvetica', 'bold');
+                    pdf.text(c.label, cx + 5.5, y + 7);
+                    pdf.setTextColor(...c.vc); pdf.setFontSize(11); pdf.setFont('helvetica', 'bold');
+                    pdf.text(c.value, cx + 5.5, y + 17);
+                    pdf.setTextColor(100,116,139); pdf.setFontSize(6); pdf.setFont('helvetica', 'normal');
+                    pdf.text(c.sub, cx + 5.5, y + 23);
+                });
+                y += 34;
+
+                // ─── Linha separadora ───
+                pdf.setDrawColor(226, 232, 240); pdf.setLineWidth(0.25);
+                pdf.line(ml, y - 4, W - mr, y - 4);
+
+                // ─── CONFIG SHARED das tabelas ───
+                const tableBase = {
+                    theme: 'plain',
+                    styles: { fontSize: 8, cellPadding: { top: 3.5, right: 4, bottom: 3.5, left: 4 }, lineColor: [241,245,249], lineWidth: 0.2, font: 'helvetica', textColor: [30,41,59] },
+                    headStyles: { fillColor: [15,23,42], textColor: [148,163,184], fontSize: 6.5, fontStyle: 'bold', cellPadding: { top: 4, right: 4, bottom: 4, left: 4 } },
+                    alternateRowStyles: { fillColor: [248,250,252] },
+                    bodyStyles: { fillColor: [255,255,255] },
+                    margin: { left: ml, right: mr },
+                    didDrawPage: () => { desenharCabecalho(); },
+                };
+
+                const sectionLabel = (label) => {
+                    pdf.setFillColor(248,250,252); pdf.rect(ml, y, uw, 9, 'F');
+                    pdf.setDrawColor(226,232,240); pdf.setLineWidth(0.2); pdf.rect(ml, y, uw, 9, 'S');
+                    pdf.setDrawColor(59,130,246); pdf.setLineWidth(1.5); pdf.line(ml, y, ml, y + 9);
+                    pdf.setTextColor(15,23,42); pdf.setFontSize(8); pdf.setFont('helvetica', 'bold');
+                    pdf.text(label, ml + 5, y + 6);
+                    y += 9;
+                };
+
+                // ─── DEVEDORES ───
+                if ((tipo === 'completo' || tipo === 'devedores') && devedores.length) {
+                    sectionLabel('DEVEDORES');
+                    pdf.autoTable({
+                        startY: y,
+                        head: [['NOME', 'VALOR', 'VENCIMENTO', 'STATUS']],
+                        body: devedores.map(d => {
+                            const at = d.data_vencimento < hj && d.status === 'Pendente';
+                            return [d.nome, `R$ ${d.valor.toFixed(2)}`, formatarData(d.data_vencimento), at ? 'Atrasado' : d.status];
+                        }),
+                        columnStyles: { 0:{cellWidth:76}, 1:{cellWidth:36,halign:'right',textColor:[8,145,178],fontStyle:'bold'}, 2:{cellWidth:34,halign:'center'}, 3:{cellWidth:34,halign:'center'} },
+                        didParseCell: data => {
+                            if (data.column.index === 3 && data.section === 'body') {
+                                data.cell.styles.textColor = data.cell.raw === 'Atrasado' ? [220,38,38] : [22,163,74];
+                                data.cell.styles.fontStyle = 'bold';
+                            }
+                        },
+                        ...tableBase,
+                    });
+                    y = pdf.lastAutoTable.finalY + 8;
                 }
 
-                const nome = `DinheiroPro_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.pdf`;
+                // ─── VENDAS ───
+                if ((tipo === 'completo' || tipo === 'vendas') && vendas.length) {
+                    sectionLabel('VENDAS');
+                    pdf.autoTable({
+                        startY: y,
+                        head: [['DESCRIÇÃO', 'VALOR', 'DATA']],
+                        body: vendas.map(v => [v.descricao, `R$ ${v.valor.toFixed(2)}`, formatarData(v.data)]),
+                        columnStyles: { 0:{cellWidth:110}, 1:{cellWidth:36,halign:'right',textColor:[217,119,6],fontStyle:'bold'}, 2:{cellWidth:34,halign:'center'} },
+                        ...tableBase,
+                    });
+                    y = pdf.lastAutoTable.finalY + 8;
+                }
+
+                // ─── GASTOS ───
+                if ((tipo === 'completo' || tipo === 'gastos') && gastos.length) {
+                    sectionLabel('GASTOS');
+                    pdf.autoTable({
+                        startY: y,
+                        head: [['DESCRIÇÃO', 'VALOR', 'DATA']],
+                        body: gastos.map(g => [g.descricao, `-R$ ${g.valor.toFixed(2)}`, formatarData(g.data)]),
+                        columnStyles: { 0:{cellWidth:110}, 1:{cellWidth:36,halign:'right',textColor:[124,58,237],fontStyle:'bold'}, 2:{cellWidth:34,halign:'center'} },
+                        ...tableBase,
+                    });
+                    y = pdf.lastAutoTable.finalY + 8;
+                }
+
+                // ─── RESUMO EXECUTIVO (apenas completo) ───
+                if (tipo === 'completo') {
+                    const rh = 54;
+                    // Verifica se cabe na página, senão passa para próxima
+                    if (y + rh > H - 20) { pdf.addPage(); desenharCabecalho(); y = 25; }
+
+                    pdf.setFillColor(15, 23, 42); pdf.roundedRect(ml, y, uw, rh, 3, 3, 'F');
+                    pdf.setDrawColor(30,41,59); pdf.setLineWidth(0.2); pdf.roundedRect(ml, y, uw, rh, 3, 3, 'S');
+
+                    pdf.setTextColor(96,165,250); pdf.setFontSize(7.5); pdf.setFont('helvetica', 'bold');
+                    pdf.text('RESUMO EXECUTIVO', ml + 6, y + 8);
+                    pdf.setDrawColor(30,41,59); pdf.setLineWidth(0.2); pdf.line(ml+6, y+11, W-mr-6, y+11);
+
+                    const resumoLinhas = [
+                        ['Total de Vendas',   `R$ ${totalVendas.toFixed(2)}`,   [251,191,36]],
+                        ['Total de Gastos',   `R$ ${totalGastos.toFixed(2)}`,   [167,139,250]],
+                        ['Total a Receber',   `R$ ${totalReceber.toFixed(2)}`,   [52,211,153]],
+                    ];
+                    resumoLinhas.forEach(([label, value, color], i) => {
+                        const ry = y + 20 + i * 9;
+                        pdf.setTextColor(148,163,184); pdf.setFontSize(7.5); pdf.setFont('helvetica', 'normal');
+                        pdf.text(label, ml + 6, ry);
+                        pdf.setTextColor(...color); pdf.setFont('helvetica', 'bold');
+                        pdf.text(value, W - mr - 6, ry, { align: 'right' });
+                    });
+
+                    pdf.setDrawColor(30,41,59); pdf.line(ml+6, y+43, W-mr-6, y+43);
+                    pdf.setTextColor(226,232,240); pdf.setFontSize(9); pdf.setFont('helvetica', 'bold');
+                    pdf.text(lucro >= 0 ? 'Lucro Liquido' : 'Prejuizo', ml + 6, y + 51);
+                    pdf.setTextColor(...(lucro >= 0 ? [74,222,128] : [248,113,113]));
+                    pdf.setFontSize(13); pdf.text(`R$ ${Math.abs(lucro).toFixed(2)}`, W - mr - 6, y + 51, { align: 'right' });
+                }
+
+                // ─── FOOTER em todas as páginas ───
+                const totalPgs = pdf.internal.getNumberOfPages();
+                for (let pg = 1; pg <= totalPgs; pg++) {
+                    pdf.setPage(pg);
+                    pdf.setFillColor(248,250,252); pdf.rect(0, H - 10, W, 10, 'F');
+                    pdf.setDrawColor(226,232,240); pdf.setLineWidth(0.2); pdf.line(0, H-10, W, H-10);
+                    pdf.setTextColor(148,163,184); pdf.setFontSize(6.5); pdf.setFont('helvetica', 'normal');
+                    pdf.text('DinheiroPro  —  Documento Confidencial', ml, H - 4);
+                    pdf.text(`Pag. ${pg} / ${totalPgs}  •  ${hoje}`, W - mr, H - 4, { align: 'right' });
+                }
+
+                const nome = `DinheiroPro_${tipo}_${hoje.replace(/\//g, '-')}.pdf`;
                 pdf.save(nome);
                 showToast('PDF baixado com sucesso!', 'success');
+
             } catch (e) {
                 showToast('Erro ao gerar PDF: ' + e.message, 'error');
+                console.error(e);
             }
         }
 
