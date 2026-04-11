@@ -65,12 +65,10 @@
         // ═══════════════════════════════════════════
 
         function abrirAba(nomeAba) {
-            // Content panels
             document.querySelectorAll('.aba-content').forEach(el => el.classList.add('hidden'));
             const target = document.getElementById('aba-' + nomeAba);
             if (target) target.classList.remove('hidden');
 
-            // Desktop tab buttons
             document.querySelectorAll('.tab-btn').forEach(btn => {
                 btn.classList.remove('tab-active');
                 btn.classList.add('border-transparent', 'text-slate-400');
@@ -82,7 +80,6 @@
                 activeTab.classList.remove('border-transparent', 'text-slate-400');
             }
 
-            // Mobile bottom nav
             document.querySelectorAll('.mob-tab').forEach(btn => {
                 btn.classList.remove('text-blue-400');
                 btn.classList.add('text-slate-500');
@@ -315,7 +312,7 @@
                 return;
             }
 
-            const hoje     = new Date().toISOString().split('T')[0];
+            const hoje      = new Date().toISOString().split('T')[0];
             const totalHoje = (vendas || []).filter(v => v.data === hoje).reduce((s, v) => s + v.valor, 0);
             totalDiv.textContent = `R$ ${totalHoje.toFixed(2)}`;
 
@@ -491,95 +488,6 @@
         // ═══════════════════════════════════════════
 
         async function gerarRelatorioPDF(tipo) {
-<<<<<<< HEAD
-HEAD
-    try {
-        const previewDiv = document.getElementById('preview-relatorio');
-        const conteudoDiv = document.getElementById('conteudo-relatorio');
-
-        if (!usuarioId) {
-            alert("Erro: Usuário não identificado");
-            return;
-        }
-
-        const [devedoresResult, vendasResult, gastosResult] = await Promise.all([
-            supabaseClient.from('devedores').select('id, nome, valor, data_vencimento, status').eq('usuario_id', usuarioId),
-            supabaseClient.from('vendas').select('id, descricao, valor, data').eq('usuario_id', usuarioId),
-            supabaseClient.from('gastos').select('id, descricao, valor, data').eq('usuario_id', usuarioId)
-        ]);
-
-        const devedores = devedoresResult.data || [];
-        const vendas = vendasResult.data || [];
-        const gastos = gastosResult.data || [];
-
-        const totalVendas = vendas.reduce((sum, v) => sum + v.valor, 0);
-        const totalGastos = gastos.reduce((sum, g) => sum + g.valor, 0);
-        const totalReceber = devedores.reduce((sum, d) => sum + d.valor, 0);
-        const saldo = totalVendas - totalGastos;
-
-        const dataAtual = new Date();
-
-        let html = `
-        <div style="font-family: Inter, sans-serif; color:#1e293b; padding:50px 40px;">
-
-            <!-- HEADER -->
-            <div style="border-bottom:2px solid #e2e8f0; padding-bottom:20px; margin-bottom:30px;">
-                <h1 style="margin:0; font-size:22px;">Relatório Financeiro</h1>
-                <p style="margin:5px 0 0; font-size:13px; color:#64748b;">
-                    ${dataAtual.toLocaleDateString('pt-BR')} - ${dataAtual.toLocaleTimeString('pt-BR')}
-                </p>
-            </div>
-
-            <!-- RESUMO EXECUTIVO -->
-            <div style="display:flex; gap:15px; margin-bottom:35px;">
-                ${cardResumo("Vendas", totalVendas, "#16a34a")}
-                ${cardResumo("Gastos", totalGastos, "#dc2626")}
-                ${cardResumo("A Receber", totalReceber, "#2563eb")}
-                ${cardResumo("Saldo", saldo, "#000")}
-            </div>
-        `;
-
-        if (tipo === 'completo' || tipo === 'vendas') {
-            html += secaoTabela("Vendas", vendas.map(v => ({
-                nome: v.descricao,
-                valor: v.valor,
-                data: v.data
-            })));
-        }
-
-        if (tipo === 'completo' || tipo === 'gastos') {
-            html += secaoTabela("Gastos", gastos.map(g => ({
-                nome: g.descricao,
-                valor: g.valor,
-                data: g.data
-            })));
-        }
-
-        if (tipo === 'completo' || tipo === 'devedores') {
-            html += secaoTabela("Devedores", devedores.map(d => ({
-                nome: d.nome,
-                valor: d.valor,
-                data: d.data_vencimento
-            })));
-        }
-
-        html += `
-            <div style="margin-top:40px; border-top:1px solid #e2e8f0; padding-top:10px;">
-                <p style="font-size:11px; color:#94a3b8;">
-                    Documento gerado automaticamente pelo DINHEIRO PRO - Gerencie suas finanças com inteligência e praticidade.
-                </p>
-            </div>
-        </div>
-        `;
-
-        conteudoDiv.innerHTML = html;
-        previewDiv.style.display = 'block';
-
-    } catch (error) {
-        alert("Erro ao gerar relatório: " + error.message);
-    }
-}
-=======
             const loading  = document.getElementById('relatorio-loading');
             const preview  = document.getElementById('preview-relatorio');
             const conteudo = document.getElementById('conteudo-relatorio');
@@ -588,7 +496,6 @@ HEAD
 
             loading.classList.remove('hidden');
             preview.classList.add('hidden');
->>>>>>> dinheiropro
 
             try {
                 const [devRes, vendRes, gastRes] = await Promise.all([
@@ -611,8 +518,6 @@ HEAD
 
                 let html = `
                 <div style="font-family:'Inter',Arial,sans-serif;color:#1e293b;line-height:1.5;">
-
-                  <!-- Header -->
                   <div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:20px;border-bottom:2px solid #e2e8f0;margin-bottom:24px;">
                     <div>
                       <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
@@ -628,8 +533,6 @@ HEAD
                       <p style="font-size:13px;font-weight:600;color:#334155;margin:2px 0 0;">${hoje} às ${agora}</p>
                     </div>
                   </div>
-
-                  <!-- KPI Summary (always visible) -->
                   <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:28px;">
                     <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:14px;">
                       <p style="font-size:10px;color:#16a34a;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 6px;">Total Vendas</p>
@@ -648,11 +551,9 @@ HEAD
                 if (tipo === 'completo' || tipo === 'devedores') html += secaoDevedoresPDF(devedores, totalReceber);
                 if (tipo === 'completo' || tipo === 'vendas')    html += secaoVendasPDF(vendas, totalVendas);
                 if (tipo === 'completo' || tipo === 'gastos')    html += secaoGastosPDF(gastos, totalGastos);
-
                 if (tipo === 'completo') html += secaoResumoPDF(totalVendas, totalGastos, totalReceber, lucro);
 
                 html += `
-                  <!-- Footer -->
                   <div style="border-top:1px solid #e2e8f0;padding-top:14px;margin-top:28px;display:flex;justify-content:space-between;align-items:center;">
                     <p style="font-size:10px;color:#94a3b8;margin:0;">Este documento é confidencial.</p>
                     <p style="font-size:10px;color:#94a3b8;margin:0;">DinheiroPro © ${new Date().getFullYear()}</p>
@@ -668,183 +569,15 @@ HEAD
                 preview.classList.remove('hidden');
                 document.getElementById('preview-relatorio').scrollIntoView({ behavior: 'smooth' });
             }
-        
-
-<<<<<<< HEAD
- cf07f1143f06c35341c2b1a1d05e7cee93743e7b
-        function gerarSecaoDevedores(devedores, total) {
-            if (!devedores || devedores.length === 0) {
-                return `
-                    <div style="background: #f5f5f5; padding: 20px; margin: 20px 0; border-radius: 8px; border-left: 4px solid #999;">
-                        <h2 style="margin-top: 0; color: #333; font-size: 16px;">DEVEDORES - SEM REGISTROS</h2>
-                        <p style="color: #666; margin: 0;">Nenhum devedor registrado no sistema.</p>
-                    </div>
-                `;
-            }
-
-            let html = `
-                <div style="background: #f5f5f5; padding: 20px; margin: 20px 0; border-radius: 8px; border-left: 4px solid #2dd4bf;">
-                    <h2 style="margin-top: 0; color: #333; font-size: 16px; margin-bottom: 15px;">📋 DEVEDORES</h2>
-                    <p style="color: #666; margin: 0 0 15px 0; font-size: 12px;">Total a Receber: <strong style="color: #2dd4bf; font-size: 14px;">R$ ${total.toFixed(2)}</strong></p>
-                    <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
-                        <thead>
-                            <tr style="background: #ddd; color: #333;">
-                                <th style="padding: 8px; text-align: left; border: 1px solid #ccc;">Nome</th>
-                                <th style="padding: 8px; text-align: right; border: 1px solid #ccc;">Valor</th>
-                                <th style="padding: 8px; text-align: center; border: 1px solid #ccc;">Vencimento</th>
-                                <th style="padding: 8px; text-align: center; border: 1px solid #ccc;">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${devedores.map((d, idx) => `
-                                <tr style="background: ${idx % 2 === 0 ? '#fafafa' : '#fff'};">
-                                    <td style="padding: 8px; border: 1px solid #eee; color: #333;">${d.nome}</td>
-                                    <td style="padding: 8px; border: 1px solid #eee; text-align: right; color: #2dd4bf; font-weight: bold;">R$ ${d.valor.toFixed(2)}</td>
-                                    <td style="padding: 8px; border: 1px solid #eee; text-align: center; color: #666;">${new Date(d.data_vencimento).toLocaleDateString('pt-BR')}</td>
-                                    <td style="padding: 8px; border: 1px solid #eee; text-align: center; color: #a855f7;">${d.status}</td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                </div>
-            `;
-            return html;
         }
 
-        function gerarSecaoVendas(vendas, total) {
-            if (!vendas || vendas.length === 0) {
-                return `
-                    <div style="background: #f5f5f5; padding: 20px; margin: 20px 0; border-radius: 8px; border-left: 4px solid #999;">
-                        <h2 style="margin-top: 0; color: #333; font-size: 16px;">VENDAS - SEM REGISTROS</h2>
-                        <p style="color: #666; margin: 0;">Nenhuma venda registrada no sistema.</p>
-                    </div>
-                `;
-            }
-
-            const vendasOrdenadas = [...vendas].sort((a, b) => new Date(b.data) - new Date(a.data));
-
-            let html = `
-                <div style="background: #f5f5f5; padding: 20px; margin: 20px 0; border-radius: 8px; border-left: 4px solid #f59e0b;">
-                    <h2 style="margin-top: 0; color: #333; font-size: 16px; margin-bottom: 15px;">📊 VENDAS</h2>
-                    <p style="color: #666; margin: 0 0 15px 0; font-size: 12px;">Total de Vendas: <strong style="color: #f59e0b; font-size: 14px;">R$ ${total.toFixed(2)}</strong></p>
-                    <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
-                        <thead>
-                            <tr style="background: #ddd; color: #333;">
-                                <th style="padding: 8px; text-align: left; border: 1px solid #ccc;">Descrição</th>
-                                <th style="padding: 8px; text-align: right; border: 1px solid #ccc;">Valor</th>
-                                <th style="padding: 8px; text-align: center; border: 1px solid #ccc;">Data</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${vendasOrdenadas.map((v, idx) => `
-                                <tr style="background: ${idx % 2 === 0 ? '#fafafa' : '#fff'};">
-                                    <td style="padding: 8px; border: 1px solid #eee; color: #333;">${v.descricao}</td>
-                                    <td style="padding: 8px; border: 1px solid #eee; text-align: right; color: #f59e0b; font-weight: bold;">R$ ${v.valor.toFixed(2)}</td>
-                                    <td style="padding: 8px; border: 1px solid #eee; text-align: center; color: #666;">${new Date(v.data).toLocaleDateString('pt-BR')}</td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                </div>
-            `;
-            return html;
-        }
-
-        function gerarSecaoGastos(gastos, total) {
-            if (!gastos || gastos.length === 0) {
-                return `
-                    <div style="background: #f5f5f5; padding: 20px; margin: 20px 0; border-radius: 8px; border-left: 4px solid #999;">
-                        <h2 style="margin-top: 0; color: #333; font-size: 16px;">GASTOS - SEM REGISTROS</h2>
-                        <p style="color: #666; margin: 0;">Nenhum gasto registrado no sistema.</p>
-                    </div>
-                `;
-            }
-
-            const gastosOrdenados = [...gastos].sort((a, b) => new Date(b.data) - new Date(a.data));
-
-            let html = `
-                <div style="background: #f5f5f5; padding: 20px; margin: 20px 0; border-radius: 8px; border-left: 4px solid #a855f7;">
-                    <h2 style="margin-top: 0; color: #333; font-size: 16px; margin-bottom: 15px;">💰 GASTOS</h2>
-                    <p style="color: #666; margin: 0 0 15px 0; font-size: 12px;">Total de Gastos: <strong style="color: #a855f7; font-size: 14px;">R$ ${total.toFixed(2)}</strong></p>
-                    <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
-                        <thead>
-                            <tr style="background: #ddd; color: #333;">
-                                <th style="padding: 8px; text-align: left; border: 1px solid #ccc;">Descrição</th>
-                                <th style="padding: 8px; text-align: right; border: 1px solid #ccc;">Valor</th>
-                                <th style="padding: 8px; text-align: center; border: 1px solid #ccc;">Data</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${gastosOrdenados.map((g, idx) => `
-                                <tr style="background: ${idx % 2 === 0 ? '#fafafa' : '#fff'};">
-                                    <td style="padding: 8px; border: 1px solid #eee; color: #333;">${g.descricao}</td>
-                                    <td style="padding: 8px; border: 1px solid #eee; text-align: right; color: #a855f7; font-weight: bold;">-R$ ${g.valor.toFixed(2)}</td>
-                                    <td style="padding: 8px; border: 1px solid #eee; text-align: center; color: #666;">${new Date(g.data).toLocaleDateString('pt-BR')}</td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                </div>
-            `;
-            return html;
-        }
-
-HEAD
-       
-        
-            function cardResumo(titulo, valor, cor) {
-    return `
-    <div style="flex:1; background:#f8fafc; padding:15px; border-radius:8px;">
-        <p style="margin:0; font-size:12px; color:#64748b;">${titulo}</p>
-        <h2 style="margin:5px 0 0; color:${cor};">R$ ${valor.toFixed(2)}</h2>
-    </div>
-    `;
-}
-
-function secaoTabela(titulo, lista) {
-    return `
-    <h3 style="margin-bottom:10px;">${titulo}</h3>
-
-    <table style="width:100%; border-collapse:collapse; font-size:13px; margin-bottom:30px;">
-        <thead>
-            <tr style="background:#f1f5f9;">
-                <th style="text-align:left; padding:10px;">Descrição</th>
-                <th style="text-align:left; padding:10px;">Data</th>
-                <th style="text-align:right; padding:10px;">Valor</th>
-            </tr>
-        </thead>
-        <tbody>
-            ${lista.map(item => `
-                <tr>
-                    <td style="padding:10px; border-bottom:1px solid #e2e8f0;">${item.nome}</td>
-                    <td style="padding:10px;">${formatarData(item.data)}</td>
-                    <td style="padding:10px; text-align:right;">R$ ${item.valor.toFixed(2)}</td>
-                </tr>
-            `).join('')}
-        </tbody>
-    </table>
-    `;
-}
-
-function formatarData(data) {
-    if (!data) return "-";
-    return new Date(data).toLocaleDateString('pt-BR');}
-
- cf07f1143f06c35341c2b1a1d05e7cee93743e7b
-        function gerarSecaoResumo(totalVendas, totalGastos, totalReceber) {
-            const lucro = totalVendas - totalGastos;
-            const lucroColor = lucro >= 0 ? '#10b981' : '#ef4444';
-            const lucroLabel = lucro >= 0 ? 'LUCRO' : 'PREJUÍZO';
-
-=======
         function secaoDevedoresPDF(devedores, total) {
             const hoje = new Date().toISOString().split('T')[0];
             if (!devedores.length) return secaoVazia('Devedores', 'Nenhum devedor registrado.');
->>>>>>> dinheiropro
             return `
             <div style="margin-bottom:24px;">
               <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-                <h2 style="font-size:13px;font-weight:700;color:#0f172a;margin:0;text-transform:uppercase;letter-spacing:0.5px;">📋 Devedores</h2>
+                <h2 style="font-size:13px;font-weight:700;color:#0f172a;margin:0;text-transform:uppercase;letter-spacing:0.5px;">Devedores</h2>
                 <span style="font-size:12px;font-weight:600;color:#0891b2;">Total a receber: R$ ${total.toFixed(2)}</span>
               </div>
               <table style="width:100%;border-collapse:collapse;font-size:11.5px;">
@@ -880,7 +613,7 @@ function formatarData(data) {
             return `
             <div style="margin-bottom:24px;">
               <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-                <h2 style="font-size:13px;font-weight:700;color:#0f172a;margin:0;text-transform:uppercase;letter-spacing:0.5px;">📊 Vendas</h2>
+                <h2 style="font-size:13px;font-weight:700;color:#0f172a;margin:0;text-transform:uppercase;letter-spacing:0.5px;">Vendas</h2>
                 <span style="font-size:12px;font-weight:600;color:#d97706;">Total faturado: R$ ${total.toFixed(2)}</span>
               </div>
               <table style="width:100%;border-collapse:collapse;font-size:11.5px;">
@@ -908,7 +641,7 @@ function formatarData(data) {
             return `
             <div style="margin-bottom:24px;">
               <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-                <h2 style="font-size:13px;font-weight:700;color:#0f172a;margin:0;text-transform:uppercase;letter-spacing:0.5px;">💰 Gastos</h2>
+                <h2 style="font-size:13px;font-weight:700;color:#0f172a;margin:0;text-transform:uppercase;letter-spacing:0.5px;">Gastos</h2>
                 <span style="font-size:12px;font-weight:600;color:#7c3aed;">Total de despesas: R$ ${total.toFixed(2)}</span>
               </div>
               <table style="width:100%;border-collapse:collapse;font-size:11.5px;">
@@ -934,7 +667,7 @@ function formatarData(data) {
         function secaoResumoPDF(totalVendas, totalGastos, totalReceber, lucro) {
             return `
             <div style="background:#0f172a;border-radius:12px;padding:20px;margin-bottom:24px;">
-              <h2 style="font-size:13px;font-weight:700;color:#60a5fa;margin:0 0 16px;text-transform:uppercase;letter-spacing:0.5px;">📈 Resumo Executivo</h2>
+              <h2 style="font-size:13px;font-weight:700;color:#60a5fa;margin:0 0 16px;text-transform:uppercase;letter-spacing:0.5px;">Resumo Executivo</h2>
               <table style="width:100%;border-collapse:collapse;">
                 <tr>
                   <td style="padding:10px 0;border-bottom:1px solid #1e293b;color:#94a3b8;font-size:12px;">Total de Vendas</td>
@@ -949,7 +682,7 @@ function formatarData(data) {
                   <td style="padding:10px 0;border-bottom:1px solid #1e293b;text-align:right;color:#34d399;font-weight:700;font-size:14px;">R$ ${totalReceber.toFixed(2)}</td>
                 </tr>
                 <tr>
-                  <td style="padding:12px 0 0;color:#e2e8f0;font-size:13px;font-weight:700;">${lucro >= 0 ? '↗ Lucro Líquido' : '↘ Prejuízo'}</td>
+                  <td style="padding:12px 0 0;color:#e2e8f0;font-size:13px;font-weight:700;">${lucro >= 0 ? 'Lucro Líquido' : 'Prejuízo'}</td>
                   <td style="padding:12px 0 0;text-align:right;color:${lucro >= 0 ? '#4ade80' : '#f87171'};font-weight:800;font-size:18px;">R$ ${Math.abs(lucro).toFixed(2)}</td>
                 </tr>
               </table>
@@ -964,49 +697,8 @@ function formatarData(data) {
         }
 
         async function downloadRelatorioPDF() {
-<<<<<<< HEAD
-HEAD
-    const element = document.getElementById('conteudo-relatorio');
-
-    const canvas = await html2canvas(element, {
-        scale: 4,
-        backgroundColor: '#ffffff'
-    });
-
-    const imgData = canvas.toDataURL('image/jpeg', 1);
-    const pdf = new jspdf.jsPDF('p', 'mm', 'a4');
-
-    const pageWidth = 210;
-    const pageHeight = 297;
-    const margin = 10;
-
-    const imgWidth = pageWidth - margin * 2;
-    const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-    let heightLeft = imgHeight;
-    let position = margin;
-
-    pdf.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight);
-    heightLeft -= (pageHeight - margin * 2);
-
-    while (heightLeft > 0) {
-        position = heightLeft - imgHeight + margin;
-        pdf.addPage();
-        pdf.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight);
-        heightLeft -= (pageHeight - margin * 2);
-    }
-
-    pdf.save('relatorio.pdf');
-}
-
-            if (!document.getElementById('conteudo-relatorio')) {
-                alert("Erro: Nenhum relatório foi gerado");
-                return;
-            }
-=======
             const el = document.getElementById('conteudo-relatorio');
-            if (!el || !el.innerHTML) { showToast('Gere um relatório primeiro.', 'warning'); return; }
->>>>>>> dinheiropro
+            if (!el || !el.innerHTML.trim()) { showToast('Gere um relatório primeiro.', 'warning'); return; }
 
             try {
                 showToast('Preparando PDF...', 'info');
@@ -1031,8 +723,7 @@ HEAD
             } catch (e) {
                 showToast('Erro ao gerar PDF: ' + e.message, 'error');
             }
-        
- cf07f1143f06c35341c2b1a1d05e7cee93743e7b
+        }
 
         // ═══════════════════════════════════════════
         // HELPERS
